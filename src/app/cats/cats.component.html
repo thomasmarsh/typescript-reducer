@@ -1,0 +1,17 @@
+<div [ngSwitch]="value.tag">
+    <p *ngSwitchCase="'Loading'">Loading...</p>
+  
+    <ng-container *ngSwitchCase="'Loaded'">
+      <ng-container *ngIf="value.tag === 'Loaded'; else errorBlock">
+        <ng-container *ngFor="let url of value.images; trackBy: trackByIndex">
+          <img [src]="url" alt="cat"/>
+        </ng-container>
+      </ng-container>
+    </ng-container>
+  
+    <ng-template #errorBlock>
+      <div *ngIf="value.tag === 'Error'">
+        <p>Error: {{ value.error }}</p>
+      </div>
+    </ng-template>
+  </div>
