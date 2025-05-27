@@ -1,4 +1,4 @@
-import { Reducer, Effect, absurd, exhaustiveGuard } from './framework';
+import { Reducer, Effect, castNever, exhaustiveGuard } from './framework';
 
 export type CounterAction = 'increment' | 'decrement' | 'reset';
 
@@ -9,7 +9,7 @@ export interface CounterEnv {
 export const counterReducer: Reducer<number, CounterAction, CounterEnv> = {
   reduce: (state, action, env) => {
     const none = Effect.empty<CounterAction>();
-    const announce = env.announce.map(absurd<CounterAction>);
+    const announce = castNever<CounterAction>(env.announce);
 
     switch (action) {
       case 'increment':

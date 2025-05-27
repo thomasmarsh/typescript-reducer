@@ -2,7 +2,11 @@ import { HttpClient } from '@angular/common/http';
 import { Effect, exhaustiveGuard, Reducer } from './framework';
 import { Result, Ok, Err } from './result';
 
+import { environment } from '../../environments/environment';
+
+// NOTE: normalization (i.e., eliminating `number` from unneeded cases) introduces AffineLens...
 export type CatState =
+  | { tag: 'Empty'; count: number }
   | { tag: 'Loading'; count: number }
   | { tag: 'Loaded'; count: number; images: string[] }
   | { tag: 'Error'; count: number; error: string };
@@ -18,29 +22,24 @@ export interface CatEnv {
   fetchCatUrls: (count: number) => Effect<Result<string[], string>>;
 }
 
-// TODO: pass API_KEY from environment.ts --define param
-const API_KEY = 'PLACE_KEY_HERE'
-
 export function createCatEnv(http: HttpClient): CatEnv {
   return {
     fetchCatUrls: (count: number) => {
       if (count < 1) {
-        return Effect.empty();
+        throw new Error("logic error")
       } else {
         return new Effect<Result<string[], string>>((cb) => {
-          const url = `https://api.thecatapi.com/v1/images/search?limit=${count}`;
+          const url = `${environment.apiUrl}/v1/images/search?limit=${count}`;
           http
             .get<{ url: string }[]>(url, {
-              headers: { 'x-api-key': API_KEY },
+              headers: { 'x-api-key': environment.apiKey },
             })
             .subscribe({
               next: (response) => {
-                console.log('response', response);
                 const urls = response.map((r) => r.url);
                 cb(Ok(urls));
               },
               error: (e) => {
-                console.log('err', e);
                 cb(Err(e?.message ?? 'Unknown error'));
               },
             });
@@ -63,14 +62,16 @@ function fetchResultToAction(result: Result<string[], string>): CatAction {
 
 export const catReducer: Reducer<CatState, CatAction, CatEnv> = {
   reduce: (state, action, env) => {
+    console.log(state);
     const none = Effect.empty<CatAction>();
-    console.log(state, action);
     switch (action.tag) {
       case 'FetchCats':
+        if (state.count < 1) {
+          return [{ tag: 'Empty', count: state.count }, none];
+        }
         return [
           { tag: 'Loading', count: state.count },
           env.fetchCatUrls(state.count).map((x) => {
-            console.log('bbb', x);
             return fetchResultToAction(x);
           }),
         ];

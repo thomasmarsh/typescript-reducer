@@ -13,13 +13,14 @@ import { count } from 'rxjs';
 export class CatsComponent implements OnInit {
   @Input() store!: Store<CatState, CatAction>;
 
-  value: CatState = { tag: 'Loading', count: 0 };
+  value: CatState = { tag: 'Empty', count: 0 };
   trackByIndex!: TrackByFunction<string>;
 
   ngOnInit(): void {
     this.store.subscribe((v) => {
-      console.log(v);
-      this.value = v;
+      if (v != this.value) {
+        this.value = v;
+      }
     });
   }
 }
