@@ -15,7 +15,7 @@ class Effect<A> {
     this.unsafeRun = unsafeRun;
   }
 
-  // Semigroup
+  // Semigroup; associative but not commutative. law: a <> (b <> c) = (a <> b) <> c
   merge(rhs: Effect<A>): Effect<A> {
     return new Effect((cb) => {
       this.unsafeRun(cb);
@@ -23,7 +23,7 @@ class Effect<A> {
     });
   }
 
-  // Monoid
+  // Monoid; law: 1 <> a = a <> 1 = a
   static empty<A>(): Effect<A> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     return new Effect((_: Callback<A>) => {
@@ -31,7 +31,7 @@ class Effect<A> {
     });
   }
 
-  // Functor
+  // Functor; law: map(f . g) = map(f) . map(g), map(id) = id
   map<B>(f: (a: A) => B): Effect<B> {
     return new Effect<B>((cb) => {
       this.unsafeRun((a) => {
@@ -40,7 +40,7 @@ class Effect<A> {
     });
   }
 
-  // Applicative
+  // Applicative (Pointed)
   static pure<A>(a: A): Effect<A> {
     return new Effect((cb) => cb(a));
   }
@@ -62,8 +62,16 @@ class Effect<A> {
   }
 }
 
-function absurd<A>(x: never): A {
-  return absurd(x);
+function castNever<A>(eff: Effect<never>): Effect<A> {
+  return eff.map(absurd<A>);
+}
+
+function absurd<A>(_value: never): A {
+  throw new Error(
+    `ERROR! Reached forbidden function with unexpected value: ${JSON.stringify(
+      _value
+    )}`
+  );
 }
 
 function concat<A>(...effs: Effect<A>[]): Effect<A> {
@@ -76,6 +84,7 @@ interface Reducer<S, A, R> {
   reduce(state: S, action: A, env: R): [S, Effect<A>];
 }
 
+// Note, order matters. a <> b != b <> a
 function concatReducers<S, A, R>(
   ...reducers: Reducer<S, A, R>[]
 ): Reducer<S, A, R> {
@@ -224,7 +233,7 @@ interface CounterEnv {
 const counterReducer: Reducer<number, CounterAction, CounterEnv> = {
   reduce: (state, action, env) => {
     const none = Effect.empty<CounterAction>();
-    const announce = env.announce.map(absurd<CounterAction>);
+    const announce = castNever<CounterAction>(env.announce);
 
     switch (action) {
       case 'increment':
@@ -365,13 +374,13 @@ function ex3() {
 
 export {
   Effect,
-  absurd,
   makeStore,
   pullback,
   concatReducers,
   loggingReducer,
   compose,
   composeL,
+  castNever,
 };
 
 export type { Reducer, Lens, Prism, Store };

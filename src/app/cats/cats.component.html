@@ -1,14 +1,16 @@
 <div [ngSwitch]="value.tag">
-    <p *ngSwitchCase="'Loading'">Loading...</p>
-  
+    <p style="font-size:larger" *ngSwitchCase="'Empty'">No cats. 😿</p>
+    <p style="font-size:larger" *ngSwitchCase="'Loading'">Loading cats... (count = {{ value.count }})</p>
+
     <ng-container *ngSwitchCase="'Loaded'">
+      <!-- needed to narrow `value.images` -->
       <ng-container *ngIf="value.tag === 'Loaded'; else errorBlock">
         <ng-container *ngFor="let url of value.images; trackBy: trackByIndex">
           <img [src]="url" alt="cat"/>
         </ng-container>
       </ng-container>
     </ng-container>
-  
+
     <ng-template #errorBlock>
       <div *ngIf="value.tag === 'Error'">
         <p>Error: {{ value.error }}</p>
