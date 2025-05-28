@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { makeStore, Effect, Store } from './core/framework';
 import { CounterAction } from './core/counter';
-import { CatAction, CatState, createCatEnv } from './core/cats';
+import { CatAction, CatState, createCatEnv, initCatState } from './core/cats';
 import { CounterComponent } from './counter/counter.component';
 import { CatsComponent } from './cats/cats.component';
 import { HttpClient } from '@angular/common/http';
@@ -44,13 +44,13 @@ export class AppComponent {
 
     // Top-level store instantiated here
     this.store = makeStore<AppState, AppAction, AppEnv>(
-      [0, 0, { tag: 'Empty', count: 0 }],
+      [0, 0, initCatState],
       env,
       appReducer
     );
 
-    this.store1 = this.store.zoom((s) => s[0], leftPrism.embed);
-    this.store2 = this.store.zoom((s) => s[1], rightPrism.embed);
-    this.store3 = this.store.zoom((s) => s[2], catPrism.embed);
+    this.store1 = this.store.scope((s) => s[0], leftPrism.embed);
+    this.store2 = this.store.scope((s) => s[1], rightPrism.embed);
+    this.store3 = this.store.scope((s) => s[2], catPrism.embed);
   }
 }

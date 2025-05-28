@@ -1,4 +1,4 @@
-<div [ngSwitch]="state.tag">
+<div [ngSwitch]="state.loadState.tag">
     <p style="font-size:larger" *ngSwitchCase="'Empty'">No cats. 😿</p>
 
     <ng-container *ngSwitchCase="'Loading'">
@@ -8,9 +8,9 @@
 
     <ng-container *ngSwitchCase="'Loaded'">
       <!-- needed to narrow `value.images` -->
-      <ng-container *ngIf="state.tag === 'Loaded'; else errorBlock">
+      <ng-container *ngIf="state.loadState.tag === 'Loaded'; else errorBlock">
 
-        <p-galleria [value]="state.images" [showIndicators]="true" [showThumbnails]="false" [changeItemOnIndicatorHover]="true" [containerStyle]="{ 'max-height': '380px', 'max-width': '320px' }">
+        <p-galleria [value]="state.loadState.images" [showIndicators]="true" [showThumbnails]="false" [changeItemOnIndicatorHover]="true" [containerStyle]="{ 'max-height': '380px', 'max-width': '320px' }">
           <ng-template #item let-item>
             <img [src]="item" style="object-fit: cover; width: 320px; height: 320px; " />
           </ng-template>
@@ -19,8 +19,8 @@
     </ng-container>
 
     <ng-template #errorBlock>
-      <div *ngIf="state.tag === 'Error'">
-        <p>Error: {{ state.error }}</p>
+      <div *ngIf="state.loadState.tag === 'Error'">
+        <p>Error: {{ state.loadState.error }}</p>
       </div>
     </ng-template>
   </div>

@@ -124,7 +124,7 @@ function pullback<S, T, A, B, X, Y>(
 interface Store<S, A> {
   subscribe(callback: (state: S) => void): () => void;
   send(action: A): void;
-  zoom<T, B>(
+  scope<T, B>(
     focusState: (state: S) => T,
     embedAction: (b: B) => A
   ): Store<T, B>;
@@ -156,24 +156,24 @@ function makeStore<S, A, R>(
     eff.unsafeRun(send);
   };
 
-  const zoom = <T, B>(
+  const scope = <T, B>(
     focusState: (s: S) => T,
     embedAction: (b: B) => A
   ): Store<T, B> => ({
     subscribe: (cb) => subscribe((s) => cb(focusState(s))),
     send: (b) => send(embedAction(b)),
-    zoom<X, Y>(
+    scope<X, Y>(
       deeperFocus: (t: T) => X,
       deeperEmbed: (y: Y) => B
     ): Store<X, Y> {
-      return zoom<X, Y>(
+      return scope<X, Y>(
         compose(deeperFocus, focusState),
         compose(embedAction, deeperEmbed)
       );
     },
   });
 
-  return { subscribe, send, zoom };
+  return { subscribe, send, scope };
 }
 
 // ----------------------------------------------------------------
@@ -352,8 +352,8 @@ function ex3() {
   const r: Reducer<State, Action, AppEnv> = concatReducers(left, right);
 
   const store = makeStore([0, 0], liveEnv, r);
-  const s1 = store.zoom((x) => x[0], firstP.embed);
-  const s2 = store.zoom((x) => x[1], secondP.embed);
+  const s1 = store.scope((x) => x[0], firstP.embed);
+  const s2 = store.scope((x) => x[1], secondP.embed);
   const unsub = store.subscribe((s) => console.log(s));
   const unsub1 = s1.subscribe((s) => console.log('1: ' + s));
   const unsub2 = s2.subscribe((s) => console.log('2: ' + s));
