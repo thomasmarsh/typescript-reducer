@@ -1,0 +1,9 @@
+.spinner-container {
+  display: flex;
+  justify-content: left;
+  align-items: center;
+  height: 320px;
+  width: 320px;
+  scale: 100%;
+  position: relative;
+}

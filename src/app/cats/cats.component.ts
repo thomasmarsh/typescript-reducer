@@ -3,10 +3,17 @@ import { CatAction, CatState } from '../core/cats';
 import { Store } from '../core/framework';
 import { NgIf, NgSwitch, NgSwitchCase, NgFor } from '@angular/common';
 import { GalleriaModule } from 'primeng/galleria';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @Component({
   selector: 'app-cats',
-  imports: [NgIf, NgSwitch, NgSwitchCase, GalleriaModule],
+  imports: [
+    NgIf,
+    NgSwitch,
+    NgSwitchCase,
+    GalleriaModule,
+    ProgressSpinnerModule,
+  ],
   templateUrl: './cats.component.html',
   styleUrl: './cats.component.css',
 })

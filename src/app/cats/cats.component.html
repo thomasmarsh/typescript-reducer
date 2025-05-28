@@ -1,6 +1,10 @@
 <div [ngSwitch]="state.tag">
     <p style="font-size:larger" *ngSwitchCase="'Empty'">No cats. 😿</p>
-    <p style="font-size:larger" *ngSwitchCase="'Loading'">Loading cats... (count = {{ state.count }})</p>
+
+    <ng-container *ngSwitchCase="'Loading'">
+      <p-progress-spinner class="spinner-container" *ngSwitchCase="'Loading'" ariaLabel="loading"></p-progress-spinner>
+    </ng-container>
+
 
     <ng-container *ngSwitchCase="'Loaded'">
       <!-- needed to narrow `value.images` -->
