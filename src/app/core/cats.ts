@@ -3,96 +3,69 @@ import { Effect, exhaustiveGuard, Reducer } from './framework';
 import { Result, Ok, Err } from './result';
 
 import { environment } from '../../environments/environment';
+import { httpFetch, HttpFetchEffect } from './effect/http';
 
-export type LoadState =
+export type CatState =
   | { tag: 'Empty' }
   | { tag: 'Loading' }
   | { tag: 'Loaded'; images: string[] }
   | { tag: 'Error'; error: string };
 
-export type CatState = { count: number; loadState: LoadState };
-
 export type CatAction =
-  | { tag: 'FetchCats' }
+  | { tag: 'FetchCats'; count: number }
   | { tag: 'CatsFetched'; urls: string[] }
   | { tag: 'CatsFetchFailed'; error: string };
 
-export const initCatState: CatState = {
-  count: 0,
-  loadState: { tag: 'Loaded', images: [] },
-};
+export const initCatState: CatState = { tag: 'Empty' };
+
+type CatSearchResponse = { url: string }[];
 
 export interface CatEnv {
-  fetchCatUrls: (count: number) => Effect<Result<string[], string>>;
-}
-
-export function createCatEnv(http: HttpClient): CatEnv {
-  return {
-    fetchCatUrls: (count: number) => {
-      if (count < 1) {
-        throw new Error('logic error');
-      } else {
-        return new Effect<Result<string[], string>>((cb) => {
-          const url = `${environment.apiUrl}/v1/images/search?limit=${count}`;
-          http
-            .get<{ url: string }[]>(url, {
-              headers: { 'x-api-key': environment.apiKey },
-            })
-            .subscribe({
-              next: (response) => {
-                const urls = response.map((r) => r.url);
-                cb(Ok(urls));
-              },
-              error: (e) => {
-                cb(Err(e?.message ?? 'Unknown error'));
-              },
-            });
-        });
-      }
-    },
-  };
-}
-
-function fetchResultToAction(result: Result<string[], string>): CatAction {
-  switch (result.tag) {
-    case 'Ok':
-      return { tag: 'CatsFetched', urls: result.value };
-    case 'Err':
-      return { tag: 'CatsFetchFailed', error: result.error };
-    default:
-      exhaustiveGuard(result);
-  }
+  httpFetch: HttpFetchEffect<CatSearchResponse>;
 }
 
 export const catReducer: Reducer<CatState, CatAction, CatEnv> = {
   reduce: (state, action, env) => {
     const none = Effect.empty<CatAction>();
     switch (action.tag) {
+      // ----------------------------------------------------------------------
+
       case 'FetchCats':
-        if (state.count < 1) {
+        if (action.count < 1) {
           return [{ ...state, loadState: { tag: 'Empty' } }, none];
         }
-        return [
-          { ...state, loadState: { tag: 'Loading' } },
-          env.fetchCatUrls(state.count).map((x) => {
-            return fetchResultToAction(x);
-          }),
-        ];
+
+        const url = `${environment.apiUrl}/v1/images/search?limit=${action.count}`;
+        const headers = { 'x-api-key': environment.apiKey };
+
+        const fetch = env.httpFetch(url, headers).map((result) =>
+          result
+            .map((imageList) => imageList.map((imageEntry) => imageEntry.url))
+            .either<CatAction>(
+              (urls) => ({ tag: 'CatsFetched', urls }),
+              (error) => ({ tag: 'CatsFetchFailed', error })
+            )
+        );
+
+        return [{ ...state, loadState: { tag: 'Loading' } }, fetch];
+
+      // ----------------------------------------------------------------------
 
       case 'CatsFetched':
         return [
           {
-            count: state.count,
-            loadState: { tag: 'Loaded', images: action.urls },
+            tag: 'Loaded',
+            images: action.urls,
           },
           none,
         ];
 
+      // ----------------------------------------------------------------------
+
       case 'CatsFetchFailed':
-        return [
-          { ...state, loadState: { tag: 'Error', error: action.error } },
-          none,
-        ];
+        return [{ ...state, tag: 'Error', error: action.error }, none];
+
+      // ----------------------------------------------------------------------
 
       default:
         exhaustiveGuard(action);
