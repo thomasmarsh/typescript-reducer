@@ -1,4 +1,4 @@
-export type Result<T, Err> = 
+export type Result<T, Err> =
   | { tag: 'Ok'; value: T }
   | { tag: 'Err'; error: Err };
 

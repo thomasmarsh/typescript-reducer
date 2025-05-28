@@ -46,17 +46,19 @@ const catPrism: Prism<AppAction, CatAction> = {
 };
 
 const appReducer = concatReducers(
-{ reduce: (state, action, env) => {
-   const none  = Effect.empty<AppAction>();
-   if (action.tag == 'LeftAction') {
-    return [state, Effect.pure(catPrism.embed({tag: 'FetchCats'}))]
-   }
-   return [state, none]
-}},
+  {
+    reduce: (state, action, env) => {
+      const none = Effect.empty<AppAction>();
+      if (action.tag == 'LeftAction') {
+        return [state, Effect.pure(catPrism.embed({ tag: 'FetchCats' }))];
+      }
+      return [state, none];
+    },
+  },
   pullback(counterReducer, leftLens, leftPrism, (env: AppEnv) => env.left),
   pullback(counterReducer, rightLens, rightPrism, (env: AppEnv) => env.right),
   pullback(catReducer, catLens, catPrism, (env: AppEnv) => env.cat)
 );
 
 export type { AppAction, AppState, AppEnv };
-export { appReducer, leftPrism, rightPrism, catPrism};
+export { appReducer, leftPrism, rightPrism, catPrism };
