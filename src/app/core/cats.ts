@@ -4,19 +4,23 @@ import { Result, Ok, Err } from './result';
 
 import { environment } from '../../environments/environment';
 
-// NOTE: normalization (i.e., eliminating `number` from unneeded cases) introduces AffineLens...
-export type CatState =
-  | { tag: 'Empty'; count: number }
-  | { tag: 'Loading'; count: number }
-  | { tag: 'Loaded'; count: number; images: string[] }
-  | { tag: 'Error'; count: number; error: string };
+export type LoadState =
+  | { tag: 'Empty' }
+  | { tag: 'Loading' }
+  | { tag: 'Loaded'; images: string[] }
+  | { tag: 'Error'; error: string };
+
+export type CatState = { count: number; loadState: LoadState };
 
 export type CatAction =
   | { tag: 'FetchCats' }
   | { tag: 'CatsFetched'; urls: string[] }
   | { tag: 'CatsFetchFailed'; error: string };
 
-export const initState = { tag: 'Loaded', images: [] };
+export const initCatState: CatState = {
+  count: 0,
+  loadState: { tag: 'Loaded', images: [] },
+};
 
 export interface CatEnv {
   fetchCatUrls: (count: number) => Effect<Result<string[], string>>;
@@ -66,10 +70,10 @@ export const catReducer: Reducer<CatState, CatAction, CatEnv> = {
     switch (action.tag) {
       case 'FetchCats':
         if (state.count < 1) {
-          return [{ tag: 'Empty', count: state.count }, none];
+          return [{ ...state, loadState: { tag: 'Empty' } }, none];
         }
         return [
-          { tag: 'Loading', count: state.count },
+          { ...state, loadState: { tag: 'Loading' } },
           env.fetchCatUrls(state.count).map((x) => {
             return fetchResultToAction(x);
           }),
@@ -77,13 +81,16 @@ export const catReducer: Reducer<CatState, CatAction, CatEnv> = {
 
       case 'CatsFetched':
         return [
-          { tag: 'Loaded', count: state.count, images: action.urls },
+          {
+            count: state.count,
+            loadState: { tag: 'Loaded', images: action.urls },
+          },
           none,
         ];
 
       case 'CatsFetchFailed':
         return [
-          { tag: 'Error', count: state.count, error: action.error },
+          { ...state, loadState: { tag: 'Error', error: action.error } },
           none,
         ];
 
