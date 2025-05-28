@@ -26,7 +26,7 @@ export function createCatEnv(http: HttpClient): CatEnv {
   return {
     fetchCatUrls: (count: number) => {
       if (count < 1) {
-        throw new Error("logic error")
+        throw new Error('logic error');
       } else {
         return new Effect<Result<string[], string>>((cb) => {
           const url = `${environment.apiUrl}/v1/images/search?limit=${count}`;
@@ -62,7 +62,6 @@ function fetchResultToAction(result: Result<string[], string>): CatAction {
 
 export const catReducer: Reducer<CatState, CatAction, CatEnv> = {
   reduce: (state, action, env) => {
-    console.log(state);
     const none = Effect.empty<CatAction>();
     switch (action.tag) {
       case 'FetchCats':

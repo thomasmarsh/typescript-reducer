@@ -44,7 +44,7 @@ export class AppComponent {
 
     // Top-level store instantiated here
     this.store = makeStore<AppState, AppAction, AppEnv>(
-      [0, 0, { tag: 'Loading', count: 0 }],
+      [0, 0, { tag: 'Empty', count: 0 }],
       env,
       appReducer
     );

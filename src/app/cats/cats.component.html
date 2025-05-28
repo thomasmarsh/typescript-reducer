@@ -1,19 +1,22 @@
-<div [ngSwitch]="value.tag">
+<div [ngSwitch]="state.tag">
     <p style="font-size:larger" *ngSwitchCase="'Empty'">No cats. 😿</p>
-    <p style="font-size:larger" *ngSwitchCase="'Loading'">Loading cats... (count = {{ value.count }})</p>
+    <p style="font-size:larger" *ngSwitchCase="'Loading'">Loading cats... (count = {{ state.count }})</p>
 
     <ng-container *ngSwitchCase="'Loaded'">
       <!-- needed to narrow `value.images` -->
-      <ng-container *ngIf="value.tag === 'Loaded'; else errorBlock">
-        <ng-container *ngFor="let url of value.images; trackBy: trackByIndex">
-          <img [src]="url" alt="cat"/>
-        </ng-container>
+      <ng-container *ngIf="state.tag === 'Loaded'; else errorBlock">
+
+        <p-galleria [value]="state.images" [showIndicators]="true" [showThumbnails]="false" [changeItemOnIndicatorHover]="true" [containerStyle]="{ 'max-height': '380px', 'max-width': '320px' }">
+          <ng-template #item let-item>
+            <img [src]="item" style="object-fit: cover; width: 320px; height: 320px; " />
+          </ng-template>
+        </p-galleria>
       </ng-container>
     </ng-container>
 
     <ng-template #errorBlock>
-      <div *ngIf="value.tag === 'Error'">
-        <p>Error: {{ value.error }}</p>
+      <div *ngIf="state.tag === 'Error'">
+        <p>Error: {{ state.error }}</p>
       </div>
     </ng-template>
   </div>
