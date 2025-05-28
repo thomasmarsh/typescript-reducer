@@ -21,7 +21,6 @@ export class CatsComponent implements OnInit {
   @Input() store!: Store<CatState, CatAction>;
 
   state: CatState = { tag: 'Empty', count: 0 };
-  trackByIndex!: TrackByFunction<string>;
 
   ngOnInit(): void {
     this.store.subscribe((v) => {
