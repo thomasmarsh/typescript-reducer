@@ -15,7 +15,7 @@ export const counterReducer: Reducer<number, CounterAction, CounterEnv> = {
       case 'increment':
         return [state + 1, none];
       case 'decrement':
-        return [state - 1, none];
+        return [Math.max(state - 1, 0), none];
       case 'reset':
         return [0, announce];
       default:
