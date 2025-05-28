@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, TrackByFunction } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, TrackByFunction } from '@angular/core';
 import { CatAction, CatState, initCatState } from '../core/cats';
 import { Store } from '../core/framework';
 import { NgIf, NgSwitch, NgSwitchCase, NgFor } from '@angular/common';
@@ -17,16 +17,21 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
   templateUrl: './cats.component.html',
   styleUrl: './cats.component.css',
 })
-export class CatsComponent implements OnInit {
+export class CatsComponent implements OnInit, OnDestroy {
   @Input() store!: Store<CatState, CatAction>;
 
   state: CatState = initCatState;
+  unubscribe!: () => void
 
   ngOnInit(): void {
-    this.store.subscribe((v) => {
+    this.unubscribe = this.store.subscribe((v) => {
       if (v != this.state) {
         this.state = v;
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.unubscribe()
   }
 }

@@ -1,3 +1,5 @@
+import { logEffect } from './effect/log';
+
 // (b -> c) -> (a -> b) -> (a -> c)
 const compose =
   <A, B, C>(f: (b: B) => C, g: (a: A) => B) =>
@@ -23,7 +25,7 @@ class Effect<A> {
     });
   }
 
-  // Monoid; law: 1 <> a = a <> 1 = a
+  // Monoid; law: empty <> eff = eff <> empty = eff
   static empty<A>(): Effect<A> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     return new Effect((_: Callback<A>) => {
@@ -122,8 +124,28 @@ function pullback<S, T, A, B, X, Y>(
 // -----------------------------------------------------------------
 
 interface Store<S, A> {
-  subscribe(callback: (state: S) => void): () => void;
+  /**
+   * Subscribe to state updates for a store. This will provide canonical
+   * instances of the current state. This is typically used to drive the
+   * presentation layer.
+   *
+   * @param callback
+   */
+  subscribe(callback: Callback<S>): () => void;
+
+  /**
+   * Submit an action to the store to be processed by the reducer.
+   *
+   * @param action
+   */
   send(action: A): void;
+
+  /**
+   * Provides a new `Store` with a narrowed focus.
+   *
+   * @param focusState - returns a "smaller" state from the provided "larger" state
+   * @param embedAction - embeds an action from the "smaller" domain into the "larger" domain
+   */
   scope<T, B>(
     focusState: (state: S) => T,
     embedAction: (b: B) => A
@@ -194,11 +216,14 @@ function loggingReducer<S, A, R>(
 ): Reducer<S, A, R> {
   return {
     reduce: (state, action, env) => {
-      const [newState, eff] = reducer.reduce(state, action, env);
-      const log = logEffect('NEW STATE: ' + JSON.stringify(newState)).map(
+      const log1 = logEffect('ACTION: ' + JSON.stringify(action)).map(
         absurd<A>
       );
-      return [newState, concat(log, eff)];
+      const [newState, eff] = reducer.reduce(state, action, env);
+      const log2 = logEffect('STATE: ' + JSON.stringify(newState)).map(
+        absurd<A>
+      );
+      return [newState, concat(log1, log2, eff)];
     },
   };
 }
@@ -251,13 +276,10 @@ const counterReducer: Reducer<number, CounterAction, CounterEnv> = {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function ex2() {
   const liveEnv: CounterEnv = {
-    announce: new Effect((_cb) => console.log('RESET"')),
+    announce: logEffect('RESET'),
   };
 
-  const logCounterReducer = loggingReducer(
-    counterReducer,
-    (s) => new Effect((_cb) => console.log(s))
-  );
+  const logCounterReducer = loggingReducer(counterReducer, logEffect);
 
   const store2 = makeStore(0, liveEnv, logCounterReducer);
   const unsub2 = store2.subscribe((s) => console.log('sub: ' + s));
@@ -289,8 +311,8 @@ function ex3() {
   }
 
   const liveEnv: AppEnv = {
-    announce1: new Effect((_cb) => console.log('RESET1"')),
-    announce2: new Effect((_cb) => console.log('RESET2"')),
+    announce1: logEffect('RESET1'),
+    announce2: logEffect('RESET2'),
   };
 
   const firstL: Lens<State, number> = {

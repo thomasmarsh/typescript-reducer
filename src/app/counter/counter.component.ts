@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { CounterAction } from '../core/counter';
 import { Store } from '../core/framework';
 
@@ -8,24 +8,17 @@ import { Store } from '../core/framework';
   templateUrl: './counter.component.html',
   styleUrl: './counter.component.css',
 })
-export class CounterComponent implements OnInit {
+export class CounterComponent implements OnInit, OnDestroy {
   @Input() store!: Store<number, CounterAction>;
 
   value = 0;
+  unsubscribe!: () => void;
 
   ngOnInit(): void {
-    this.store.subscribe((v) => (this.value = v));
+    this.unsubscribe = this.store.subscribe((v) => (this.value = v));
   }
 
-  increment() {
-    this.store.send('increment');
-  }
-
-  decrement() {
-    this.store.send('decrement');
-  }
-
-  reset() {
-    this.store.send('reset');
+  ngOnDestroy(): void {
+    this.unsubscribe();
   }
 }

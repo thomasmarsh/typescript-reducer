@@ -2,7 +2,7 @@ import { CatAction, CatEnv, catReducer, CatState } from './cats';
 import { CounterAction, CounterEnv, counterReducer } from './counter';
 import { concatReducers, Effect, Lens, Prism, pullback } from './framework';
 
-type AppState = [number, number, CatState];
+type AppState = { leftCounter: number; rightCounter: number; cats: CatState };
 
 type AppAction =
   | { tag: 'LeftAction'; value: CounterAction }
@@ -16,13 +16,13 @@ interface AppEnv {
 }
 
 const leftLens: Lens<AppState, number> = {
-  get: (s) => s[0],
-  set: (s, v) => [v, s[1], { ...s[2], count: v }],
+  get: (s) => s.leftCounter,
+  set: (s, v) => ({ ...s, leftCounter: v }),
 };
 
 const rightLens: Lens<AppState, number> = {
-  get: (s) => s[1],
-  set: (s, v) => [s[0], v, s[2]],
+  get: (s) => s.rightCounter,
+  set: (s, v) => ({ ...s, rightCounter: v }),
 };
 
 const leftPrism: Prism<AppAction, CounterAction> = {
@@ -36,8 +36,8 @@ const rightPrism: Prism<AppAction, CounterAction> = {
 };
 
 const catLens: Lens<AppState, CatState> = {
-  get: (s) => s[2],
-  set: (s, v) => [s[0], s[1], v],
+  get: (s) => s.cats,
+  set: (s, v) => ({ ...s, cats: v }),
 };
 
 const catPrism: Prism<AppAction, CatAction> = {
@@ -46,18 +46,23 @@ const catPrism: Prism<AppAction, CatAction> = {
 };
 
 const appReducer = concatReducers(
+  pullback(counterReducer, leftLens, leftPrism, (env: AppEnv) => env.left),
+  pullback(counterReducer, rightLens, rightPrism, (env: AppEnv) => env.right),
+  pullback(catReducer, catLens, catPrism, (env: AppEnv) => env.cat),
   {
     reduce: (state, action, env) => {
       const none = Effect.empty<AppAction>();
-      if (action.tag == 'LeftAction') {
-        return [state, Effect.pure(catPrism.embed({ tag: 'FetchCats' }))];
+      if (action.tag === 'LeftAction') {
+        return [
+          state,
+          Effect.pure(
+            catPrism.embed({ tag: 'FetchCats', count: state.leftCounter })
+          ),
+        ];
       }
       return [state, none];
     },
-  },
-  pullback(counterReducer, leftLens, leftPrism, (env: AppEnv) => env.left),
-  pullback(counterReducer, rightLens, rightPrism, (env: AppEnv) => env.right),
-  pullback(catReducer, catLens, catPrism, (env: AppEnv) => env.cat)
+  }
 );
 
 export type { AppAction, AppState, AppEnv };

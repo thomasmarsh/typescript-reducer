@@ -1,6 +1,6 @@
 <div class="counter">
     <p class="number">{{ value }}</p>
-    <button (click)="increment()">+</button>
-    <button (click)="decrement()">−</button>
-    <button (click)="reset()">Reset</button>
+    <button (click)="store.send('increment')">+</button>
+    <button (click)="store.send('decrement')">−</button>
+    <button (click)="store.send('reset')">Reset</button>
 </div>
