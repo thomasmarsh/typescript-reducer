@@ -1,6 +1,7 @@
 import { CatAction, CatEnv, catReducer, CatState } from './cats';
 import { CounterAction, CounterEnv, counterReducer } from './counter';
-import { concatReducers, Effect, Lens, Prism, pullback } from './framework';
+import { concatReducers, Effect, pullback } from './framework';
+import { Lens, lensFor, Prism } from './optics';
 
 interface AppState {
   leftCounter: number;
@@ -19,15 +20,9 @@ interface AppEnv {
   cat: CatEnv;
 }
 
-const leftLens: Lens<AppState, number> = {
-  get: (s) => s.leftCounter,
-  set: (s, v) => ({ ...s, leftCounter: v }),
-};
-
-const rightLens: Lens<AppState, number> = {
-  get: (s) => s.rightCounter,
-  set: (s, v) => ({ ...s, rightCounter: v }),
-};
+const leftLens: Lens<AppState, number> = lensFor('leftCounter');
+const rightLens: Lens<AppState, number> = lensFor('rightCounter');
+const catLens: Lens<AppState, CatState> = lensFor('cats');
 
 const leftPrism: Prism<AppAction, CounterAction> = {
   extract: (a) => (a.tag === 'LeftAction' ? a.value : null),
@@ -37,11 +32,6 @@ const leftPrism: Prism<AppAction, CounterAction> = {
 const rightPrism: Prism<AppAction, CounterAction> = {
   extract: (a) => (a.tag === 'RightAction' ? a.value : null),
   embed: (v) => ({ tag: 'RightAction', value: v }),
-};
-
-const catLens: Lens<AppState, CatState> = {
-  get: (s) => s.cats,
-  set: (s, v) => ({ ...s, cats: v }),
 };
 
 const catPrism: Prism<AppAction, CatAction> = {
