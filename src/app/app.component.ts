@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { makeStore, Effect, Store, loggingReducer } from './core/framework';
+import { makeStore, Store, loggingReducer } from './core/framework';
 import { CounterAction } from './core/counter';
 import { CatAction, CatState, initCatState } from './core/cats';
 import { CounterComponent } from './counter/counter.component';

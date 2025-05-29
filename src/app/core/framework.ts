@@ -57,10 +57,12 @@ class Effect<A> {
   }
 
   static void<A>(f: () => void): Effect<A> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    return new Effect<never>((_: Callback<never>) => {
-      f();
-    }).map(absurd<A>);
+    return castNever<A>(
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      new Effect<never>((_: Callback<never>) => {
+        f();
+      })
+    );
   }
 }
 
@@ -84,7 +86,7 @@ function concat<A>(...effs: Effect<A>[]): Effect<A> {
 
 interface Reducer<S, A, R> {
   reduce(state: S, action: A, env: R): [S, Effect<A>];
-}
+};
 
 // Note, order matters. a <> b != b <> a
 function concatReducers<S, A, R>(
@@ -216,14 +218,10 @@ function loggingReducer<S, A, R>(
 ): Reducer<S, A, R> {
   return {
     reduce: (state, action, env) => {
-      const log1 = logEffect('ACTION: ' + JSON.stringify(action)).map(
-        absurd<A>
-      );
+      const log1 = logEffect('ACTION: ' + JSON.stringify(action));
       const [newState, eff] = reducer.reduce(state, action, env);
-      const log2 = logEffect('STATE: ' + JSON.stringify(newState)).map(
-        absurd<A>
-      );
-      return [newState, concat(log1, log2, eff)];
+      const log2 = logEffect('STATE: ' + JSON.stringify(newState));
+      return [newState, concat(castNever<A>(log1), castNever<A>(log2), eff)];
     },
   };
 }

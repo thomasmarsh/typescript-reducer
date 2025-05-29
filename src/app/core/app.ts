@@ -2,7 +2,11 @@ import { CatAction, CatEnv, catReducer, CatState } from './cats';
 import { CounterAction, CounterEnv, counterReducer } from './counter';
 import { concatReducers, Effect, Lens, Prism, pullback } from './framework';
 
-type AppState = { leftCounter: number; rightCounter: number; cats: CatState };
+interface AppState {
+  leftCounter: number;
+  rightCounter: number;
+  cats: CatState;
+}
 
 type AppAction =
   | { tag: 'LeftAction'; value: CounterAction }
@@ -50,19 +54,19 @@ const appReducer = concatReducers(
   pullback(counterReducer, rightLens, rightPrism, (env: AppEnv) => env.right),
   pullback(catReducer, catLens, catPrism, (env: AppEnv) => env.cat),
   {
-    reduce: (state, action, env) => {
+    reduce: (state, action, ) => {
       const none = Effect.empty<AppAction>();
       if (action.tag === 'LeftAction') {
         return [
           state,
           Effect.pure(
-            catPrism.embed({ tag: 'FetchCats', count: state.leftCounter })
+            catPrism.embed({ tag: 'FetchCats', count: state.leftCounter }),
           ),
         ];
       }
       return [state, none];
     },
-  }
+  },
 );
 
 export type { AppAction, AppState, AppEnv };
