@@ -1,4 +1,5 @@
 import { logEffect } from './effect/log';
+import { Lens, Prism } from './optics';
 
 // (b -> c) -> (a -> b) -> (a -> c)
 const compose =
@@ -228,25 +229,6 @@ function loggingReducer<S, A, R>(
 
 // ----------------------------------------------------------------
 
-interface Lens<S, A> {
-  get(s: S): A;
-  set(s: S, a: A): S;
-}
-
-interface Prism<S, A> {
-  embed(a: A): S;
-  extract(s: S): A | null;
-}
-
-function composeL<A, B, C>(lhs: Lens<A, B>, rhs: Lens<B, C>): Lens<A, C> {
-  return {
-    get: (a) => rhs.get(lhs.get(a)),
-    set: (a, c) => lhs.set(a, rhs.set(lhs.get(a), c)),
-  };
-}
-
-// ----------------------------------------------------------------
-
 type CounterAction = 'increment' | 'decrement' | 'reset';
 
 interface CounterEnv {
@@ -399,8 +381,7 @@ export {
   concatReducers,
   loggingReducer,
   compose,
-  composeL,
   castNever,
 };
 
-export type { Reducer, Lens, Prism, Store };
+export type { Reducer, Store };
