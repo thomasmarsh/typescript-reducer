@@ -12,7 +12,7 @@ import { Err, Ok, Result } from '../result';
  */
 export type HttpFetchEffect<A> = (
   url: string,
-  headers: Record<string, string | string[]>
+  headers: Record<string, string | string[]>,
 ) => Effect<Result<A, string>>;
 
 /**
@@ -28,6 +28,6 @@ export function httpFetch<A>(http: HttpClient): HttpFetchEffect<A> {
       http.get<A>(url, { headers }).subscribe({
         next: (response) => callback(Ok(response)),
         error: (e) => callback(Err(e?.message ?? 'Unknown error')),
-      })
+      }),
     );
 }

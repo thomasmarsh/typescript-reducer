@@ -61,7 +61,7 @@ class Effect<A> {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       new Effect<never>((_: Callback<never>) => {
         f();
-      })
+      }),
     );
   }
 }
@@ -73,8 +73,8 @@ function castNever<A>(eff: Effect<never>): Effect<A> {
 function absurd<A>(_value: never): A {
   throw new Error(
     `ERROR! Reached forbidden function with unexpected value: ${JSON.stringify(
-      _value
-    )}`
+      _value,
+    )}`,
   );
 }
 
@@ -86,7 +86,7 @@ function concat<A>(...effs: Effect<A>[]): Effect<A> {
 
 interface Reducer<S, A, R> {
   reduce(state: S, action: A, env: R): [S, Effect<A>];
-};
+}
 
 // Note, order matters. a <> b != b <> a
 function concatReducers<S, A, R>(
@@ -109,7 +109,7 @@ function pullback<S, T, A, B, X, Y>(
   reducer: Reducer<T, B, Y>,
   lens: Lens<S, T>,
   prism: Prism<A, B>,
-  env: (x: X) => Y
+  env: (x: X) => Y,
 ): Reducer<S, A, X> {
   return {
     reduce: (s, a, x) => {
@@ -150,14 +150,14 @@ interface Store<S, A> {
    */
   scope<T, B>(
     focusState: (state: S) => T,
-    embedAction: (b: B) => A
+    embedAction: (b: B) => A,
   ): Store<T, B>;
 }
 
 function makeStore<S, A, R>(
   initialState: S,
   env: R,
-  reducer: Reducer<S, A, R>
+  reducer: Reducer<S, A, R>,
 ): Store<S, A> {
   type Callback = (s: S) => void;
 
@@ -182,17 +182,17 @@ function makeStore<S, A, R>(
 
   const scope = <T, B>(
     focusState: (s: S) => T,
-    embedAction: (b: B) => A
+    embedAction: (b: B) => A,
   ): Store<T, B> => ({
     subscribe: (cb) => subscribe((s) => cb(focusState(s))),
     send: (b) => send(embedAction(b)),
     scope<X, Y>(
       deeperFocus: (t: T) => X,
-      deeperEmbed: (y: Y) => B
+      deeperEmbed: (y: Y) => B,
     ): Store<X, Y> {
       return scope<X, Y>(
         compose(deeperFocus, focusState),
-        compose(embedAction, deeperEmbed)
+        compose(embedAction, deeperEmbed),
       );
     },
   });
@@ -205,8 +205,8 @@ function makeStore<S, A, R>(
 export function exhaustiveGuard(_value: never): never {
   throw new Error(
     `ERROR! Reached forbidden guard function with unexpected value: ${JSON.stringify(
-      _value
-    )}`
+      _value,
+    )}`,
   );
 }
 
@@ -214,7 +214,7 @@ export function exhaustiveGuard(_value: never): never {
 
 function loggingReducer<S, A, R>(
   reducer: Reducer<S, A, R>,
-  logEffect: (entry: string) => Effect<never>
+  logEffect: (entry: string) => Effect<never>,
 ): Reducer<S, A, R> {
   return {
     reduce: (state, action, env) => {
@@ -355,7 +355,7 @@ function ex3() {
       return {
         announce: x.announce1,
       };
-    }
+    },
   );
 
   const right: Reducer<State, Action, AppEnv> = pullback(
@@ -366,7 +366,7 @@ function ex3() {
       return {
         announce: x.announce2,
       };
-    }
+    },
   );
 
   const r: Reducer<State, Action, AppEnv> = concatReducers(left, right);

@@ -40,11 +40,11 @@ export const catReducer: Reducer<CatState, CatAction, CatEnv> = {
             .map((imageList) => imageList.map((imageEntry) => imageEntry.url))
             .either<CatAction>(
               (urls) => ({ tag: 'CatsFetched', urls }),
-              (error) => ({ tag: 'CatsFetchFailed', error })
-            )
+              (error) => ({ tag: 'CatsFetchFailed', error }),
+            ),
         );
 
-        return [{  tag: 'Loading' }, fetch];
+        return [{ tag: 'Loading' }, fetch];
       }
 
       // ----------------------------------------------------------------------

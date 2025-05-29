@@ -21,7 +21,7 @@ export class CatsComponent implements OnInit, OnDestroy {
   @Input() store!: Store<CatState, CatAction>;
 
   state: CatState = initCatState;
-  unubscribe!: () => void
+  unubscribe!: () => void;
 
   ngOnInit(): void {
     this.unubscribe = this.store.subscribe((v) => {
@@ -32,6 +32,6 @@ export class CatsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.unubscribe()
+    this.unubscribe();
   }
 }
