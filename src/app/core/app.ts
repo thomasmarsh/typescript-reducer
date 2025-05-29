@@ -54,7 +54,7 @@ const appReducer = concatReducers(
   pullback(counterReducer, rightLens, rightPrism, (env: AppEnv) => env.right),
   pullback(catReducer, catLens, catPrism, (env: AppEnv) => env.cat),
   {
-    reduce: (state, action, ) => {
+    reduce: (state, action) => {
       const none = Effect.empty<AppAction>();
       if (action.tag === 'LeftAction') {
         return [

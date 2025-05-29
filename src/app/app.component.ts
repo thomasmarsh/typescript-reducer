@@ -48,7 +48,7 @@ export class AppComponent {
     this.store = makeStore<AppState, AppAction, AppEnv>(
       { leftCounter: 0, rightCounter: 0, cats: initCatState },
       env,
-      loggingReducer(appReducer, logEffect)
+      loggingReducer(appReducer, logEffect),
     );
 
     this.store1 = this.store.scope((s) => s.leftCounter, leftPrism.embed);
