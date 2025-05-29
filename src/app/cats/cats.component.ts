@@ -1,7 +1,7 @@
-import { Component, Input, OnDestroy, OnInit, TrackByFunction } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { CatAction, CatState, initCatState } from '../core/cats';
 import { Store } from '../core/framework';
-import { NgIf, NgSwitch, NgSwitchCase, NgFor } from '@angular/common';
+import { NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
 import { GalleriaModule } from 'primeng/galleria';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 

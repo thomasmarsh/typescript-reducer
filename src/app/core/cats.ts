@@ -1,9 +1,6 @@
-import { HttpClient } from '@angular/common/http';
 import { Effect, exhaustiveGuard, Reducer } from './framework';
-import { Result, Ok, Err } from './result';
-
 import { environment } from '../../environments/environment';
-import { httpFetch, HttpFetchEffect } from './effect/http';
+import { HttpFetchEffect } from './effect/http';
 
 export type CatState =
   | { tag: 'Empty' }
@@ -30,7 +27,7 @@ export const catReducer: Reducer<CatState, CatAction, CatEnv> = {
     switch (action.tag) {
       // ----------------------------------------------------------------------
 
-      case 'FetchCats':
+      case 'FetchCats': {
         if (action.count < 1) {
           return [{ ...state, loadState: { tag: 'Empty' } }, none];
         }
@@ -47,7 +44,8 @@ export const catReducer: Reducer<CatState, CatAction, CatEnv> = {
             )
         );
 
-        return [{ ...state, loadState: { tag: 'Loading' } }, fetch];
+        return [{  tag: 'Loading' }, fetch];
+      }
 
       // ----------------------------------------------------------------------
 
