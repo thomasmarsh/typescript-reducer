@@ -1,6 +1,7 @@
 import { Effect, exhaustiveGuard, Reducer } from './framework';
 import { environment } from '../../environments/environment';
 import { HttpFetchEffect } from './effect/http';
+import { debounceTime } from 'rxjs';
 
 export type CatState =
   | { tag: 'Empty' }
@@ -35,7 +36,9 @@ export const catReducer: Reducer<CatState, CatAction, CatEnv> = {
         const url = `${environment.apiUrl}/v1/images/search?limit=${action.count}`;
         const headers = { 'x-api-key': environment.apiKey };
 
-        const fetch = env.httpFetch(url, headers).map((result) =>
+        const fetch = Effect.fromObservable(
+          env.httpFetch(url, headers).toObservable().pipe(debounceTime(1000)),
+        ).map((result) =>
           result
             .map((imageList) => imageList.map((imageEntry) => imageEntry.url))
             .either<CatAction>(
