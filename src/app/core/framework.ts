@@ -1,4 +1,4 @@
-import { logEffect } from './effect/log';
+import { Observable } from 'rxjs';
 import { Lens, Prism } from './optics';
 
 // (b -> c) -> (a -> b) -> (a -> c)
@@ -48,12 +48,16 @@ class Effect<A> {
     return new Effect((cb) => cb(a));
   }
 
-  // Monad
-  flatMap<B>(f: (a: A) => Effect<B>): Effect<B> {
-    return new Effect<B>((cb) => {
-      this.unsafeRun((a) => {
-        f(a).unsafeRun(cb);
-      });
+  toObservable(): Observable<A> {
+    return new Observable((subscriber) =>
+      this.unsafeRun((a) => subscriber.next(a)),
+    );
+  }
+
+  // NOTE: not robust, there is no way to unsubscribe
+  static fromObservable<A>(observable: Observable<A>): Effect<A> {
+    return new Effect<A>((callback) => {
+      observable.subscribe(callback);
     });
   }
 
@@ -201,6 +205,35 @@ function makeStore<S, A, R>(
   return { subscribe, send, scope };
 }
 
+export type TestStoreStep<S, A> =
+  | { tag: 'send'; send: (a: A, update: (s: S) => S) => void }
+  | { tag: 'do'; do: () => void }
+  | { tag: 'receive'; receive: (a: A) => void };
+
+export interface TestStore<S, A> extends Store<S, A> {
+  assert(...steps: TestStoreStep<S, A>[]): void;
+}
+
+// TODO
+export function makeTestStore<S, A, R>(
+  initialState: S,
+  env: R,
+  reducer: Reducer<S, A, R>,
+): TestStore<S, A> {
+  const store = makeStore(initialState, env, reducer);
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  function assert(...steps: TestStoreStep<S, A>[]) {
+    /* no-op */
+  }
+  return {
+    assert,
+    subscribe: store.subscribe,
+    send: store.send,
+    scope: store.scope,
+  };
+}
+
 // ----------------------------------------------------------------
 
 export function exhaustiveGuard(_value: never): never {
@@ -225,153 +258,6 @@ function loggingReducer<S, A, R>(
       return [newState, concat(castNever<A>(log1), castNever<A>(log2), eff)];
     },
   };
-}
-
-// ----------------------------------------------------------------
-
-type CounterAction = 'increment' | 'decrement' | 'reset';
-
-interface CounterEnv {
-  announce: Effect<never>;
-}
-
-const counterReducer: Reducer<number, CounterAction, CounterEnv> = {
-  reduce: (state, action, env) => {
-    const none = Effect.empty<CounterAction>();
-    const announce = castNever<CounterAction>(env.announce);
-
-    switch (action) {
-      case 'increment':
-        return [state + 1, none];
-      case 'decrement':
-        return [state - 1, none];
-      case 'reset':
-        return [0, announce];
-      default:
-        return exhaustiveGuard(action);
-    }
-  },
-};
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function ex2() {
-  const liveEnv: CounterEnv = {
-    announce: logEffect('RESET'),
-  };
-
-  const logCounterReducer = loggingReducer(counterReducer, logEffect);
-
-  const store2 = makeStore(0, liveEnv, logCounterReducer);
-  const unsub2 = store2.subscribe((s) => console.log('sub: ' + s));
-  store2.send('increment');
-  store2.send('decrement');
-  store2.send('reset');
-  unsub2();
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function ex3() {
-  type State = [number, number];
-
-  interface LeftAction {
-    type: 'LeftAction';
-    value: CounterAction;
-  }
-
-  interface RightAction {
-    type: 'RightAction';
-    value: CounterAction;
-  }
-
-  type Action = LeftAction | RightAction;
-
-  interface AppEnv {
-    announce1: Effect<never>;
-    announce2: Effect<never>;
-  }
-
-  const liveEnv: AppEnv = {
-    announce1: logEffect('RESET1'),
-    announce2: logEffect('RESET2'),
-  };
-
-  const firstL: Lens<State, number> = {
-    get: (s) => s[0],
-    set: (s, n) => [n, s[1]],
-  };
-
-  const firstP: Prism<Action, CounterAction> = {
-    embed: (x) => {
-      return { type: 'LeftAction', value: x };
-    },
-    extract: (x) => {
-      if (x.type !== 'LeftAction') {
-        return null;
-      }
-      return x.value;
-    },
-  };
-
-  const secondL: Lens<State, number> = {
-    get: (s) => s[1],
-    set: (s, n) => [s[0], n],
-  };
-
-  const secondP: Prism<Action, CounterAction> = {
-    embed: (x) => {
-      return { type: 'RightAction', value: x };
-    },
-    extract: (x) => {
-      if (x.type !== 'RightAction') {
-        return null;
-      }
-      return x.value;
-    },
-  };
-
-  const left: Reducer<State, Action, AppEnv> = pullback(
-    counterReducer,
-    firstL,
-    firstP,
-    (x) => {
-      return {
-        announce: x.announce1,
-      };
-    },
-  );
-
-  const right: Reducer<State, Action, AppEnv> = pullback(
-    counterReducer,
-    secondL,
-    secondP,
-    (x) => {
-      return {
-        announce: x.announce2,
-      };
-    },
-  );
-
-  const r: Reducer<State, Action, AppEnv> = concatReducers(left, right);
-
-  const store = makeStore([0, 0], liveEnv, r);
-  const s1 = store.scope((x) => x[0], firstP.embed);
-  const s2 = store.scope((x) => x[1], secondP.embed);
-  const unsub = store.subscribe((s) => console.log(s));
-  const unsub1 = s1.subscribe((s) => console.log('1: ' + s));
-  const unsub2 = s2.subscribe((s) => console.log('2: ' + s));
-  store.send(firstP.embed('increment'));
-  store.send(firstP.embed('decrement'));
-  store.send(firstP.embed('increment'));
-  store.send(firstP.embed('increment'));
-  store.send(firstP.embed('reset'));
-  store.send(secondP.embed('increment'));
-  store.send(secondP.embed('decrement'));
-  store.send(secondP.embed('increment'));
-  store.send(secondP.embed('increment'));
-  store.send(secondP.embed('reset'));
-  unsub();
-  unsub1();
-  unsub2();
 }
 
 export {
