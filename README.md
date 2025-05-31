@@ -14,7 +14,7 @@ The interesting areas are primarily the core:
 
 Before you can run this, there is one piece of setup for the API service we use.
 
-- Get an API key for the [Cat API](https://thecatapi.com/). (Follow the links and create a free account.)
+- Get an API key for the [Cat API](https://thecatapi.com/). Follow the links and create a free account. If you don't do this, the app will actually still work, but will not honor the HTTP request's specification to limit the number of images retrieved.
 - Place the key in the environment files:
   - [environment.development.ts](src/environments/environment.development.ts)
   - [environment.ts](src/environments/environment.ts)
@@ -33,3 +33,5 @@ This implementation suffers from the following primary deficiencies that prevent
 - `Store.send()` is implemented recursively. It should maintain a FIFO queue array of actions to process so that it doesn't accidentally blow the stack.
 
 - There are no performance considerations. This is purely a pedagogic tool.
+
+- The `catReducer` is intentionally simple. Using more complicated state management, and cancellable effects, it would be better implemented using debouncing of requests and canceling inflight requests when changes are received in a `Loading` state.
