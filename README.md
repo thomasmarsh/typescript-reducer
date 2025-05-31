@@ -7,6 +7,7 @@ The interesting areas are primarily the core:
 - [framework.ts](src/app/core/framework.ts) - the core framework that provides `Reducer`, `Effect`, and `Store`
 - [counter.ts](src/app/core/counter.ts) - a trivial demonstration reducer
 - [cats.ts](src/app/core/cats.ts) - a reducer with a complex side-effect
+- [app.ts](src/app/core/app.ts) - a composite reducer that uses pullbacks to combine other reducers and share state/actions
 - [optics.ts](src/app/core/optics.ts) - lens and prism implementations
 
 ## Running
