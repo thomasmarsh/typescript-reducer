@@ -205,35 +205,6 @@ function makeStore<S, A, R>(
   return { subscribe, send, scope };
 }
 
-export type TestStoreStep<S, A> =
-  | { tag: 'send'; send: (a: A, update: (s: S) => S) => void }
-  | { tag: 'do'; do: () => void }
-  | { tag: 'receive'; receive: (a: A) => void };
-
-export interface TestStore<S, A> extends Store<S, A> {
-  assert(...steps: TestStoreStep<S, A>[]): void;
-}
-
-// TODO
-export function makeTestStore<S, A, R>(
-  initialState: S,
-  env: R,
-  reducer: Reducer<S, A, R>,
-): TestStore<S, A> {
-  const store = makeStore(initialState, env, reducer);
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  function assert(...steps: TestStoreStep<S, A>[]) {
-    /* no-op */
-  }
-  return {
-    assert,
-    subscribe: store.subscribe,
-    send: store.send,
-    scope: store.scope,
-  };
-}
-
 // ----------------------------------------------------------------
 
 export function exhaustiveGuard(_value: never): never {
