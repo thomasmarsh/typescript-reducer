@@ -1,13 +1,13 @@
 // Add deep equality check for state comparisons
 
-import { compose, Reducer, Store } from "./framework";
+import { compose, Reducer, Store } from './framework';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function deepEqual(a: any, b: any): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
-type Callback<S> = (s: S) => void
+type Callback<S> = (s: S) => void;
 
 // Update TestStoreStep type to match new assertion model
 export type TestStoreStep<S, A> =
@@ -15,29 +15,29 @@ export type TestStoreStep<S, A> =
   | { tag: 'receive'; action: A; update: (state: S) => void }
   | { tag: 'do'; do: () => void };
 
-export interface TestStore<S,A> extends Store<S,A> {
-    assert(...steps: TestStoreStep<S, A>[]): void
+export interface TestStore<S, A> extends Store<S, A> {
+  assert(...steps: TestStoreStep<S, A>[]): void;
 }
 
 export function makeTestStore<S, A, R>(
   initialState: S,
   env: R,
-  reducer: Reducer<S, A, R>
+  reducer: Reducer<S, A, R>,
 ): TestStore<S, A> {
   let state = initialState;
   const actionQueue: A[] = [];
   const subscribers: Callback<S>[] = [];
-  
+
   // Notify subscribers of state changes
   const notify = () => {
-    subscribers.forEach(cb => cb(state));
+    subscribers.forEach((cb) => cb(state));
   };
 
   // Process an action through the reducer
   const processAction = (action: A) => {
     const [newState, effect] = reducer.reduce(state, action, env);
     state = newState;
-    
+
     // Capture effects synchronously
     effect.unsafeRun((producedAction) => {
       actionQueue.push(producedAction);
@@ -53,22 +53,22 @@ export function makeTestStore<S, A, R>(
         if (index !== -1) subscribers.splice(index, 1);
       };
     },
-    
+
     send: (action: A) => {
       processAction(action);
       notify();
     },
-    
+
     scope: <T, B>(
       focusState: (s: S) => T,
-      embedAction: (b: B) => A
+      embedAction: (b: B) => A,
     ): Store<T, B> => ({
-      subscribe: (cb) => store.subscribe(s => cb(focusState(s))),
+      subscribe: (cb) => store.subscribe((s) => cb(focusState(s))),
       send: (b) => store.send(embedAction(b)),
-      scope: (deeperFocus, deeperEmbed) => 
+      scope: (deeperFocus, deeperEmbed) =>
         store.scope(
           compose(deeperFocus, focusState),
-          compose(embedAction, deeperEmbed)
+          compose(embedAction, deeperEmbed),
         ),
     }),
   };
@@ -76,7 +76,7 @@ export function makeTestStore<S, A, R>(
   // TestStore-specific implementation
   const testStore: TestStore<S, A> = {
     ...store,
-    
+
     assert(...steps: TestStoreStep<S, A>[]): void {
       let expectedState = JSON.parse(JSON.stringify(state));
       const queueSnapshot = [...actionQueue];
@@ -86,11 +86,11 @@ export function makeTestStore<S, A, R>(
           switch (step.tag) {
             case 'send': {
               const action = step.action;
+
               expectedState = step.update(expectedState);
-              
               processAction(action);
               notify();
-              
+
               if (!deepEqual(state, expectedState)) {
                 throw new Error(`State mismatch after sending action:\n
                   Expected: ${JSON.stringify(expectedState)}\n
@@ -98,12 +98,12 @@ export function makeTestStore<S, A, R>(
               }
               break;
             }
-            
+
             case 'receive': {
               if (actionQueue.length === 0) {
                 throw new Error('No actions to receive');
               }
-              
+
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               const receivedAction = actionQueue.shift()!;
               if (!deepEqual(receivedAction, step.action)) {
@@ -111,11 +111,11 @@ export function makeTestStore<S, A, R>(
                   Expected: ${JSON.stringify(step.action)}\n
                   Received: ${JSON.stringify(receivedAction)}`);
               }
-              
-              step.update(expectedState);
+
+              expectedState = step.update(expectedState);
               processAction(receivedAction);
               notify();
-              
+
               if (!deepEqual(state, expectedState)) {
                 throw new Error(`State mismatch after receiving action:\n
                   Expected: ${JSON.stringify(expectedState)}\n
@@ -123,7 +123,7 @@ export function makeTestStore<S, A, R>(
               }
               break;
             }
-            
+
             case 'do': {
               step.do();
               break;
@@ -134,7 +134,7 @@ export function makeTestStore<S, A, R>(
         // Verify all actions were processed
         if (actionQueue.length > 0) {
           throw new Error(
-            `${actionQueue.length} unprocessed actions remaining in queue`
+            `${actionQueue.length} unprocessed actions remaining in queue`,
           );
         }
       } catch (error) {
@@ -144,7 +144,7 @@ export function makeTestStore<S, A, R>(
         actionQueue.push(...queueSnapshot);
         throw error;
       }
-    }
+    },
   };
 
   return testStore;

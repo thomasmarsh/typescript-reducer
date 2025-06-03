@@ -15,10 +15,12 @@ export type CatAction =
 
 export const initCatState: CatState = { tag: 'Empty' };
 
-type CatSearchResponse = { url: string }[];
+export interface CatSearchUrl {
+  url: string;
+}
 
 export interface CatEnv {
-  httpFetch: HttpFetchEffect<CatSearchResponse>;
+  httpFetch: HttpFetchEffect<CatSearchUrl[]>;
 }
 
 export const catReducer: Reducer<CatState, CatAction, CatEnv> = {
