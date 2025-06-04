@@ -32,6 +32,8 @@ export class CatsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.unubscribe();
+    if (this.unubscribe) {
+      this.unubscribe();
+    }
   }
 }

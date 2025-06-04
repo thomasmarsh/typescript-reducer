@@ -1,6 +1,7 @@
-import { Effect, exhaustiveGuard, Reducer } from './framework';
+import { Effect, Reducer } from './framework';
 import { environment } from '../../environments/environment';
 import { HttpFetchEffect } from './effect/http';
+import { exhaustiveGuard } from './util';
 
 export type CatState =
   | { tag: 'Empty' }
@@ -31,7 +32,7 @@ export const catReducer: Reducer<CatState, CatAction, CatEnv> = {
 
       case 'FetchCats': {
         if (action.count < 1) {
-          return [{ ...state, loadState: { tag: 'Empty' } }, none];
+          return [{ tag: 'Empty' }, none];
         }
 
         const url = `${environment.apiUrl}/v1/images/search?limit=${action.count}`;

@@ -1,4 +1,5 @@
-import { Reducer, Effect, castNever, exhaustiveGuard } from './framework';
+import { Reducer, Effect, castNever } from './framework';
+import { exhaustiveGuard } from './util';
 
 export type CounterAction = 'increment' | 'decrement' | 'reset';
 

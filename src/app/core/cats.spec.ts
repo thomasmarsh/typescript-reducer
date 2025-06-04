@@ -1,19 +1,8 @@
-import {
-  catReducer,
-  CatSearchUrl,
-  initCatState,
-} from './cats';
-import { Effect } from './framework';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { catReducer, CatSearchUrl, initCatState } from './cats';
+import { Effect, receive, send } from './framework';
 import { Err, Ok, Result } from './result';
-import { makeTestStore, TestStoreStep } from './test_store';
-
-function send<S, A>(action: A, update: (s: S) => S): TestStoreStep<S, A> {
-  return { tag: 'send', action, update };
-}
-
-function receive<S, A>(action: A, update: (s: S) => S): TestStoreStep<S, A> {
-  return { tag: 'receive', action, update };
-}
+import { makeTestStore, TestStoreStep } from './framework';
 
 describe('catReducer', () => {
   const catUrls = [
@@ -26,24 +15,35 @@ describe('catReducer', () => {
   const catError: Result<CatSearchUrl[], string> = Err('failure');
 
   type SearchEffect = Effect<Result<CatSearchUrl[], string>>;
-
   const successEffect: SearchEffect = Effect.pure(catUrlResult);
   const failureEffect: SearchEffect = Effect.pure(catError);
+
+  it('should do nothing with < 1 count', () => {
+    const testStore = makeTestStore(
+      initCatState,
+      { httpFetch: (_url, _headers) => successEffect },
+      catReducer,
+    );
+
+    expect(function () {
+      testStore.assert(
+        send({ tag: 'FetchCats', count: 0 }, (_state) => ({ tag: 'Empty' })),
+      );
+    }).not.toThrow();
+  });
 
   it('should receive urls', () => {
     const testStore = makeTestStore(
       initCatState,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       { httpFetch: (_url, _headers) => successEffect },
       catReducer,
     );
+
     expect(function () {
       testStore.assert(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         send({ tag: 'FetchCats', count: 10 }, (_state) => ({ tag: 'Loading' })),
         receive(
           { tag: 'CatsFetched', urls: catUrls.map((x) => x.url) },
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           (_state) => ({
             tag: 'Loaded',
             images: ['http://a', 'http://b', 'http://c'],
@@ -52,18 +52,17 @@ describe('catReducer', () => {
       );
     }).not.toThrow();
   });
+
   it('should receive error', () => {
     const testStore = makeTestStore(
       initCatState,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       { httpFetch: (_url, _headers) => failureEffect },
       catReducer,
     );
+
     expect(function () {
       testStore.assert(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         send({ tag: 'FetchCats', count: 10 }, (_state) => ({ tag: 'Loading' })),
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         receive({ tag: 'CatsFetchFailed', error: 'failure' }, (_state) => ({
           tag: 'Error',
           error: 'failure',

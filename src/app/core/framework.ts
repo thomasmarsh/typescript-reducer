@@ -1,11 +1,6 @@
 import { Observable } from 'rxjs';
 import { Lens, Prism } from './optics';
-
-// (b -> c) -> (a -> b) -> (a -> c)
-const compose =
-  <A, B, C>(f: (b: B) => C, g: (a: A) => B) =>
-  (a: A): C =>
-    f(g(a));
+import { absurd, compose, deepEqual } from './util';
 
 // -----------------------------------------------------------------
 
@@ -73,14 +68,6 @@ class Effect<A> {
 
 function castNever<A>(eff: Effect<never>): Effect<A> {
   return eff.map(absurd<A>);
-}
-
-function absurd<A>(_value: never): A {
-  throw new Error(
-    `ERROR! Reached forbidden function with unexpected value: ${JSON.stringify(
-      _value,
-    )}`,
-  );
 }
 
 function concat<A>(...effs: Effect<A>[]): Effect<A> {
@@ -159,61 +146,228 @@ interface Store<S, A> {
   ): Store<T, B>;
 }
 
+export type TestStoreStep<S, A> =
+  | { tag: 'send'; action: A; update: (state: S) => S }
+  | { tag: 'receive'; action: A; update: (state: S) => S }
+  | { tag: 'do'; do: () => void };
+
+export function send<S, A>(action: A, update: (s: S) => S): TestStoreStep<S, A> {
+  return { tag: 'send', action, update };
+}
+
+export function receive<S, A>(action: A, update: (s: S) => S): TestStoreStep<S, A> {
+  return { tag: 'receive', action, update };
+}
+
+type TestStoreAssertion<S, A> = (...steps: TestStoreStep<S, A>[]) => void;
+
+export interface TestStore<S, A> extends Store<S, A> {
+  assert: TestStoreAssertion<S, A>;
+}
+
+interface SubscriberManager<S> {
+  getState: () => S;
+  setState: (newState: S) => void;
+  subscribe: (callback: Callback<S>) => () => void;
+  notify: () => void;
+}
+
+function makeSubscriberManager<S>(
+  initialState: S,
+  immediateCallback = false,
+): SubscriberManager<S> {
+  let state = initialState;
+  const subscribers = new Map<string, Callback<S>>();
+
+  const subscribe = (callback: Callback<S>): (() => void) => {
+    const uuid = crypto.randomUUID();
+    subscribers.set(uuid, callback);
+    if (immediateCallback) callback(state);
+    return () => {
+      subscribers.delete(uuid);
+    };
+  };
+
+  const notify = () => {
+    subscribers.forEach((sub) => sub(state));
+  };
+
+  return {
+    getState: () => state,
+    setState: (newState: S) => {
+      state = newState;
+    },
+    subscribe,
+    notify,
+  };
+}
+
+function makeScopeImpl<S, A>(base: {
+  subscribe: (cb: Callback<S>) => () => void;
+  send: (a: A) => void;
+}) {
+  return <T, B>(
+    focusState: (s: S) => T,
+    embedAction: (b: B) => A,
+  ): Store<T, B> => ({
+    subscribe: (cb) => base.subscribe((s) => cb(focusState(s))),
+    send: (b) => base.send(embedAction(b)),
+    scope: <X, Y>(deeperFocus: (t: T) => X, deeperEmbed: (y: Y) => B) =>
+      makeScopeImpl(base)(
+        compose(deeperFocus, focusState),
+        compose(embedAction, deeperEmbed),
+      ),
+  });
+}
+
 function makeStore<S, A, R>(
   initialState: S,
   env: R,
   reducer: Reducer<S, A, R>,
 ): Store<S, A> {
-  type Callback = (s: S) => void;
+  const manager = makeSubscriberManager<S>(initialState);
+  let state = manager.getState();
 
-  let state = initialState;
-  const subscribers: Callback[] = [];
-
-  const subscribe = (callback: Callback): (() => void) => {
-    subscribers.push(callback);
-    return () => {
-      const index = subscribers.indexOf(callback);
-      if (index !== -1) subscribers.splice(index, 1);
-    };
-  };
-
-  // This is the simple definition, but can blow the stack:
   const send = (action: A) => {
     const [newState, eff] = reducer.reduce(state, action, env);
     state = newState;
-    subscribers.forEach((sub) => sub(state));
+    manager.setState(state);
+    manager.notify();
     eff.unsafeRun(send);
   };
 
-  const scope = <T, B>(
-    focusState: (s: S) => T,
-    embedAction: (b: B) => A,
-  ): Store<T, B> => ({
-    subscribe: (cb) => subscribe((s) => cb(focusState(s))),
-    send: (b) => send(embedAction(b)),
-    scope<X, Y>(
-      deeperFocus: (t: T) => X,
-      deeperEmbed: (y: Y) => B,
-    ): Store<X, Y> {
-      return scope<X, Y>(
-        compose(deeperFocus, focusState),
-        compose(embedAction, deeperEmbed),
-      );
-    },
-  });
+  return {
+    subscribe: manager.subscribe,
+    send,
+    scope: makeScopeImpl<S, A>({
+      subscribe: manager.subscribe,
+      send,
+    }),
+  };
+}
 
-  return { subscribe, send, scope };
+export function makeTestStore<S, A, R>(
+  initialState: S,
+  env: R,
+  reducer: Reducer<S, A, R>,
+): TestStore<S, A> {
+  const manager = makeSubscriberManager<S>(initialState, true);
+  const actionQueue: A[] = [];
+  let state = manager.getState();
+
+  const processAction = (action: A) => {
+    const [newState, effect] = reducer.reduce(state, action, env);
+    state = newState;
+    manager.setState(state);
+    effect.unsafeRun((producedAction) => {
+      actionQueue.push(producedAction);
+    });
+  };
+
+  const send = (action: A) => {
+    processAction(action);
+    manager.notify();
+  };
+
+  const baseStore: Store<S, A> = {
+    subscribe: manager.subscribe,
+    send,
+    scope: makeScopeImpl<S, A>({
+      subscribe: manager.subscribe,
+      send,
+    }),
+  };
+
+  return {
+    ...baseStore,
+    assert: makeAssert(manager, actionQueue, processAction),
+  };
+}
+
+function makeAssert<S, A>(
+  manager: SubscriberManager<S>,
+  actionQueue: A[],
+  processAction: (a: A) => void,
+): TestStoreAssertion<S, A> {
+  return (...steps) => {
+    const initialState = manager.getState();
+    const queueSnapshot = [...actionQueue];
+
+    try {
+      let expectedState = structuredClone(initialState);
+
+      function handleStep(step: { action: A; update: (s: S) => S }) {
+        expectedState = step.update(expectedState);
+        processAction(step.action);
+        manager.notify();
+        validateState(expectedState);
+      }
+
+      steps.forEach((step) => {
+        switch (step.tag) {
+          case 'send':
+            handleStep(step);
+            break;
+
+          case 'receive': {
+            validateActionQueue();
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const receivedAction = actionQueue.shift()!;
+            validateAction(receivedAction, step.action);
+
+            handleStep(step);
+            break;
+          }
+          case 'do':
+            step.do();
+            break;
+        }
+      });
+
+      validateActionQueueExhausted();
+    } catch (error) {
+      resetState(initialState, queueSnapshot);
+      throw error;
+    }
+
+    // Helper functions
+    function validateState(expected: S) {
+      if (!deepEqual(manager.getState(), expected)) {
+        throw new Error(`State mismatch:\n
+          Expected: ${JSON.stringify(expected)}\n
+          Actual:   ${JSON.stringify(manager.getState())}`);
+      }
+    }
+
+    function validateActionQueue() {
+      if (actionQueue.length === 0) {
+        throw new Error('No actions to receive');
+      }
+    }
+
+    function validateAction(received: A, expected: A) {
+      if (!deepEqual(received, expected)) {
+        throw new Error(`Action mismatch:\n
+          Expected: ${JSON.stringify(expected)}\n
+          Received: ${JSON.stringify(received)}`);
+      }
+    }
+
+    function validateActionQueueExhausted() {
+      if (actionQueue.length > 0) {
+        throw new Error(`${actionQueue.length} unprocessed actions remaining`);
+      }
+    }
+
+    function resetState(initial: S, queue: A[]) {
+      manager.setState(initial);
+      actionQueue.length = 0;
+      actionQueue.push(...queue);
+    }
+  };
 }
 
 // ----------------------------------------------------------------
-
-export function exhaustiveGuard(_value: never): never {
-  throw new Error(
-    `ERROR! Reached forbidden guard function with unexpected value: ${JSON.stringify(
-      _value,
-    )}`,
-  );
-}
 
 // ----------------------------------------------------------------
 

@@ -1,35 +1,51 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { CounterAction, CounterEnv, counterReducer } from './counter';
-import { Effect } from './framework';
-import { makeTestStore, TestStore, TestStoreStep } from './test_store';
-
-function send<S, A>(action: A, update: (s: S) => S): TestStoreStep<S, A> {
-  return { tag: 'send', action, update };
-}
+import { makeTestStore, TestStore, TestStoreStep, Effect, send } from './framework';
 
 describe('counterReducer', () => {
-  const env: CounterEnv = { announce: Effect.empty() };
+  let announceCount = 0;
+  const env: CounterEnv = {
+    announce: new Effect((_) => {
+      announceCount++;
+    }),
+  };
   let testStore: TestStore<number, CounterAction>;
 
   beforeEach(() => {
+    announceCount = 0;
     testStore = makeTestStore(0, env, counterReducer);
   });
 
   it('should increment', () => {
     expect(function () {
+      testStore.assert(send('increment', (x) => 1));
+    }).not.toThrow();
+  });
+
+  it('should decrement', () => {
+    expect(function () {
       testStore.assert(
-        send('increment', (state) => {
-          return state + 1;
-        }),
+        send('increment', (x) => 1),
+        send('decrement', (x) => 0),
       );
     }).not.toThrow();
+  });
+
+  it('should announce reset', () => {
+    expect(announceCount).toBe(0);
+    expect(function () {
+      testStore.assert(send('reset', (x) => 0));
+    }).not.toThrow();
+    expect(announceCount).toBe(1);
   });
 
   it('should reset', () => {
     expect(function () {
       testStore.assert(
-        send('reset', (state) => {
-          return state - state;
-        }),
+        send('increment', (x) => 1),
+        send('increment', (x) => 2),
+        send('increment', (x) => 3),
+        send('reset', (x) => 0),
       );
     }).not.toThrow();
   });
@@ -37,9 +53,12 @@ describe('counterReducer', () => {
   it('should not go below zero', () => {
     expect(function () {
       testStore.assert(
-        send('decrement', (state) => {
-          return state;
-        }),
+        send('increment', (x) => 1),
+        send('increment', (x) => 2),
+        send('decrement', (x) => 1),
+        send('decrement', (x) => 0),
+        // Additional decrement shouldn't change value
+        send('decrement', (x) => 0),
       );
     }).not.toThrow();
   });
