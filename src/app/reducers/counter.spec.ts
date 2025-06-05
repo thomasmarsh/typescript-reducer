@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { CounterAction, CounterEnv, counterReducer } from './counter';
-import { makeTestStore, TestStore, TestStoreStep, Effect, send } from './framework';
+import { makeTestStore, TestStore, Effect, send } from '../core/framework';
 
 describe('counterReducer', () => {
   let announceCount = 0;

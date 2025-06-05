@@ -1,5 +1,5 @@
-import { Reducer, Effect, castNever } from './framework';
-import { exhaustiveGuard } from './util';
+import { Reducer, Effect, castNever } from '../core/framework';
+import { exhaustiveGuard } from '../core/util';
 
 export type CounterAction = 'increment' | 'decrement' | 'reset';
 

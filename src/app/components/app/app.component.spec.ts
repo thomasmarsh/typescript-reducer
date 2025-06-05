@@ -2,7 +2,7 @@
 import { TestBed } from '@angular/core/testing';
 import { AppComponent } from './app.component';
 import { provideHttpClient } from '@angular/common/http';
-import { Effect, makeStore } from './core/framework';
+import { Effect, makeStore } from '../../core/framework';
 import {
   AppAction,
   AppEnv,
@@ -11,8 +11,8 @@ import {
   catPrism,
   leftPrism,
   rightPrism,
-} from './core/app';
-import { initCatState } from './core/cats';
+} from '../../reducers/app';
+import { initCatState } from '../../reducers/cats';
 
 describe('AppComponent', () => {
   beforeEach(async () => {

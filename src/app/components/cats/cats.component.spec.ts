@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CatsComponent } from './cats.component';
 import { Effect, makeStore } from 'app/core/framework';
-import { catReducer, initCatState } from 'app/core/cats';
+import { catReducer, initCatState } from 'app/reducers/cats';
 
 describe('CatsComponent', () => {
   let component: CatsComponent;

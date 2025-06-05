@@ -1,6 +1,6 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { CounterAction } from '../core/counter';
-import { Store } from '../core/framework';
+import { CounterAction } from '../../reducers/counter';
+import { Store } from '../../core/framework';
 
 @Component({
   selector: 'app-counter',

@@ -1,7 +1,7 @@
-import { Effect, Reducer } from './framework';
+import { Effect, Reducer } from '../core/framework';
 import { environment } from '../../environments/environment';
-import { HttpFetchEffect } from './effect/http';
-import { exhaustiveGuard } from './util';
+import { HttpFetchEffect } from '../core/effects/http';
+import { exhaustiveGuard } from '../core/util';
 
 export type CatState =
   | { tag: 'Empty' }

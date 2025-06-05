@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CounterComponent } from './counter.component';
 import { Effect, makeStore } from 'app/core/framework';
-import { counterReducer } from 'app/core/counter';
+import { counterReducer } from 'app/reducers/counter';
 
 describe('CounterComponent', () => {
   let component: CounterComponent;

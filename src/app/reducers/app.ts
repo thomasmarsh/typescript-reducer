@@ -1,7 +1,7 @@
 import { CatAction, CatEnv, catReducer, CatState } from './cats';
 import { CounterAction, CounterEnv, counterReducer } from './counter';
-import { concatReducers, Effect, pullback } from './framework';
-import { Lens, lensFor, Prism } from './optics';
+import { concatReducers, Effect, pullback } from '../core/framework';
+import { Lens, lensFor, Prism } from '../core/optics';
 
 interface AppState {
   leftCounter: number;

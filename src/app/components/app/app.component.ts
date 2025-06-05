@@ -1,9 +1,9 @@
 import { Component, inject } from '@angular/core';
-import { makeStore, Store, loggingReducer } from './core/framework';
-import { CounterAction } from './core/counter';
-import { CatAction, CatState, initCatState } from './core/cats';
-import { CounterComponent } from './counter/counter.component';
-import { CatsComponent } from './cats/cats.component';
+import { makeStore, Store, loggingReducer } from '../../core/framework';
+import { CounterAction } from '../../reducers/counter';
+import { CatAction, CatState, initCatState } from '../../reducers/cats';
+import { CounterComponent } from '../counter/counter.component';
+import { CatsComponent } from '../cats/cats.component';
 import { HttpClient } from '@angular/common/http';
 import {
   AppAction,
@@ -13,9 +13,9 @@ import {
   catPrism,
   leftPrism,
   rightPrism,
-} from './core/app';
-import { httpFetch } from './core/effect/http';
-import { logEffect } from './core/effect/log';
+} from '../../reducers/app';
+import { httpFetch } from '../../core/effects/http';
+import { logEffect } from '../../core/effects/log';
 
 @Component({
   imports: [CounterComponent, CatsComponent],
