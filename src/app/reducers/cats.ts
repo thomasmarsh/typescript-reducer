@@ -35,6 +35,10 @@ export const catReducer: Reducer<CatState, CatAction, CatEnv> = {
           return [{ tag: 'Empty' }, none];
         }
 
+        if (environment.apiKey === '') {
+          return [{tag: 'Error', error: 'missing API key' }, none]
+        }
+
         const url = `${environment.apiUrl}/v1/images/search?limit=${action.count}`;
         const headers = { 'x-api-key': environment.apiKey };
 

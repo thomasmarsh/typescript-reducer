@@ -1,5 +1,10 @@
 <div [ngSwitch]="state.tag">
+    <div *ngIf="state.tag === 'Error'">
+      <p>Error: {{ state.error }}</p>
+    </div>
+
     <p style="font-size:larger" *ngSwitchCase="'Empty'">No cats. 😿</p>
+
 
     <ng-container *ngSwitchCase="'Loading'">
       <p-progress-spinner class="spinner-container" *ngSwitchCase="'Loading'" ariaLabel="loading"></p-progress-spinner>
@@ -8,7 +13,7 @@
 
     <ng-container *ngSwitchCase="'Loaded'">
       <!-- needed to narrow `value.images` -->
-      <ng-container *ngIf="state.tag === 'Loaded'; else errorBlock">
+      <ng-container *ngIf="state.tag === 'Loaded'">
 
         <p-galleria [value]="state.images" [showIndicators]="true" [showThumbnails]="false" [changeItemOnIndicatorHover]="true" [containerStyle]="{ 'max-height': '380px', 'max-width': '320px' }">
           <ng-template #item let-item>
@@ -17,10 +22,4 @@
         </p-galleria>
       </ng-container>
     </ng-container>
-
-    <ng-template #errorBlock>
-      <div *ngIf="state.tag === 'Error'">
-        <p>Error: {{ state.error }}</p>
-      </div>
-    </ng-template>
   </div>
