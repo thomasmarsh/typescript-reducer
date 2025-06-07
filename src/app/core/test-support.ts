@@ -176,7 +176,10 @@ function makeAssert<S, A>(
 
     function validateActionQueueExhausted() {
       if (actionQueue.length > 0) {
-        throw new Error(`${actionQueue.length} unprocessed actions remaining`);
+        throw new Error(
+          `${actionQueue.length} unprocessed action(s) remaining:\n
+           ${JSON.stringify(actionQueue, null, 2)}`,
+        );
       }
     }
 
