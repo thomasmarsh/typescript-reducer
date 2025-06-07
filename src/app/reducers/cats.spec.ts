@@ -2,7 +2,7 @@
 import { catReducer, CatSearchUrl, initCatState } from './cats';
 import { Effect, receive, send } from '../core/framework';
 import { Err, Ok, Result } from '../core/result';
-import { makeTestStore, TestStoreStep } from '../core/framework';
+import { makeTestStore } from '../core/framework';
 
 describe('catReducer', () => {
   const catUrls = [
@@ -19,28 +19,28 @@ describe('catReducer', () => {
   const failureEffect: SearchEffect = Effect.pure(catError);
 
   it('should do nothing with < 1 count', () => {
-    const testStore = makeTestStore(
+    const store = makeTestStore(
       initCatState,
       { httpFetch: (_url, _headers) => successEffect },
       catReducer,
     );
 
-    expect(function () {
-      testStore.assert(
+    expect(() => {
+      store.assert(
         send({ tag: 'FetchCats', count: 0 }, (_state) => ({ tag: 'Empty' })),
       );
     }).not.toThrow();
   });
 
   it('should receive urls', () => {
-    const testStore = makeTestStore(
+    const store = makeTestStore(
       initCatState,
       { httpFetch: (_url, _headers) => successEffect },
       catReducer,
     );
 
-    expect(function () {
-      testStore.assert(
+    expect(() => {
+      store.assert(
         send({ tag: 'FetchCats', count: 10 }, (_state) => ({ tag: 'Loading' })),
         receive(
           { tag: 'CatsFetched', urls: catUrls.map((x) => x.url) },
@@ -54,14 +54,14 @@ describe('catReducer', () => {
   });
 
   it('should receive error', () => {
-    const testStore = makeTestStore(
+    const store = makeTestStore(
       initCatState,
       { httpFetch: (_url, _headers) => failureEffect },
       catReducer,
     );
 
-    expect(function () {
-      testStore.assert(
+    expect(() => {
+      store.assert(
         send({ tag: 'FetchCats', count: 10 }, (_state) => ({ tag: 'Loading' })),
         receive({ tag: 'CatsFetchFailed', error: 'failure' }, (_state) => ({
           tag: 'Error',

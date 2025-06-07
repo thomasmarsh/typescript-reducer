@@ -2,6 +2,8 @@
 import { CounterAction, CounterEnv, counterReducer } from './counter';
 import { makeTestStore, TestStore, Effect, send } from '../core/framework';
 
+import counterSnapshot from './fixtures/counter.json';
+
 describe('counterReducer', () => {
   let announceCount = 0;
   const env: CounterEnv = {
@@ -9,22 +11,22 @@ describe('counterReducer', () => {
       announceCount++;
     }),
   };
-  let testStore: TestStore<number, CounterAction>;
+  let store: TestStore<number, CounterAction>;
 
   beforeEach(() => {
     announceCount = 0;
-    testStore = makeTestStore(0, env, counterReducer);
+    store = makeTestStore(0, env, counterReducer);
   });
 
   it('should increment', () => {
-    expect(function () {
-      testStore.assert(send('increment', (x) => 1));
+    expect(() => {
+      store.assert(send('increment', (x) => 1));
     }).not.toThrow();
   });
 
   it('should decrement', () => {
-    expect(function () {
-      testStore.assert(
+    expect(() => {
+      store.assert(
         send('increment', (x) => 1),
         send('decrement', (x) => 0),
       );
@@ -33,15 +35,15 @@ describe('counterReducer', () => {
 
   it('should announce reset', () => {
     expect(announceCount).toBe(0);
-    expect(function () {
-      testStore.assert(send('reset', (x) => 0));
+    expect(() => {
+      store.assert(send('reset', (x) => 0));
     }).not.toThrow();
     expect(announceCount).toBe(1);
   });
 
   it('should reset', () => {
-    expect(function () {
-      testStore.assert(
+    expect(() => {
+      store.assert(
         send('increment', (x) => 1),
         send('increment', (x) => 2),
         send('increment', (x) => 3),
@@ -51,14 +53,36 @@ describe('counterReducer', () => {
   });
 
   it('should not go below zero', () => {
-    expect(function () {
-      testStore.assert(
+    expect(() => {
+      store.assert(
         send('increment', (x) => 1),
         send('increment', (x) => 2),
         send('decrement', (x) => 1),
         send('decrement', (x) => 0),
         // Additional decrement shouldn't change value
         send('decrement', (x) => 0),
+      );
+    }).not.toThrow();
+  });
+
+  it('should match snapshot', () => {
+    expect(() => {
+      store.send('increment');
+      store.send('increment');
+      store.send('increment');
+      store.send('increment');
+      store.send('decrement');
+      store.send('decrement');
+      store.send('decrement');
+      store.send('increment');
+      store.send('reset');
+
+      store.send('decrement');
+      store.send('increment');
+      store.send('decrement');
+      store.send('increment');
+      store.assertSnapshot(
+        counterSnapshot as { state: number; action?: CounterAction }[],
       );
     }).not.toThrow();
   });

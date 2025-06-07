@@ -1,0 +1,106 @@
+[
+  {
+    "state": {
+      "leftCounter": 0,
+      "rightCounter": 0,
+      "cats": {
+        "tag": "Empty"
+      }
+    }
+  },
+  {
+    "state": {
+      "leftCounter": 1,
+      "rightCounter": 0,
+      "cats": {
+        "tag": "Empty"
+      }
+    },
+    "action": {
+      "tag": "LeftAction",
+      "value": "increment"
+    }
+  },
+  {
+    "state": {
+      "leftCounter": 1,
+      "rightCounter": 0,
+      "cats": {
+        "tag": "Loading"
+      }
+    },
+    "action": {
+      "tag": "CatAction",
+      "value": {
+        "tag": "FetchCats",
+        "count": 3
+      }
+    }
+  },
+  {
+    "state": {
+      "leftCounter": 1,
+      "rightCounter": 0,
+      "cats": {
+        "tag": "Loading"
+      }
+    },
+    "action": {
+      "tag": "CatAction",
+      "value": {
+        "tag": "FetchCats",
+        "count": 1
+      }
+    }
+  },
+  {
+    "state": {
+      "leftCounter": 1,
+      "rightCounter": 0,
+      "cats": {
+        "tag": "Loaded",
+        "images": [
+          "http://a",
+          "http://b",
+          "http://c"
+        ]
+      }
+    },
+    "action": {
+      "tag": "CatAction",
+      "value": {
+        "tag": "CatsFetched",
+        "urls": [
+          "http://a",
+          "http://b",
+          "http://c"
+        ]
+      }
+    }
+  },
+  {
+    "state": {
+      "leftCounter": 1,
+      "rightCounter": 0,
+      "cats": {
+        "tag": "Loaded",
+        "images": [
+          "http://a",
+          "http://b",
+          "http://c"
+        ]
+      }
+    },
+    "action": {
+      "tag": "CatAction",
+      "value": {
+        "tag": "CatsFetched",
+        "urls": [
+          "http://a",
+          "http://b",
+          "http://c"
+        ]
+      }
+    }
+  }
+]

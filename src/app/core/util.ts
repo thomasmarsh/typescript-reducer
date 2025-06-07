@@ -12,8 +12,11 @@ export function absurd<A>(_value: never): A {
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function deepEqual(a: any, b: any): boolean {
+export function deepClone<A>(a: A): A {
+  return JSON.parse(JSON.stringify(a));
+}
+
+export function deepEqual<A>(a: A, b: A): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 

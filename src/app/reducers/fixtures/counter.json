@@ -1,0 +1,57 @@
+ [
+   {
+     "state": 0
+   },
+   {
+     "state": 1,
+     "action": "increment"
+   },
+   {
+     "state": 2,
+     "action": "increment"
+   },
+   {
+     "state": 3,
+     "action": "increment"
+   },
+   {
+     "state": 4,
+     "action": "increment"
+   },
+   {
+     "state": 3,
+     "action": "decrement"
+   },
+   {
+     "state": 2,
+     "action": "decrement"
+   },
+   {
+     "state": 1,
+     "action": "decrement"
+   },
+   {
+     "state": 2,
+     "action": "increment"
+   },
+   {
+     "state": 0,
+     "action": "reset"
+   },
+   {
+     "state": 0,
+     "action": "decrement"
+   },
+   {
+     "state": 1,
+     "action": "increment"
+   },
+   {
+     "state": 0,
+     "action": "decrement"
+   },
+   {
+     "state": 1,
+     "action": "increment"
+   }
+ ]

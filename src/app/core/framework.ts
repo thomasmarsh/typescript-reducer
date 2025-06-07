@@ -1,6 +1,7 @@
 import { Observable } from 'rxjs';
 import { Lens, Prism } from './optics';
-import { absurd, compose, deepEqual } from './util';
+import { absurd, compose, deepClone, deepEqual } from './util';
+import { diff } from 'jest-diff';
 
 // -----------------------------------------------------------------
 
@@ -151,11 +152,17 @@ export type TestStoreStep<S, A> =
   | { tag: 'receive'; action: A; update: (state: S) => S }
   | { tag: 'do'; do: () => void };
 
-export function send<S, A>(action: A, update: (s: S) => S): TestStoreStep<S, A> {
+export function send<S, A>(
+  action: A,
+  update: (s: S) => S,
+): TestStoreStep<S, A> {
   return { tag: 'send', action, update };
 }
 
-export function receive<S, A>(action: A, update: (s: S) => S): TestStoreStep<S, A> {
+export function receive<S, A>(
+  action: A,
+  update: (s: S) => S,
+): TestStoreStep<S, A> {
   return { tag: 'receive', action, update };
 }
 
@@ -163,6 +170,7 @@ type TestStoreAssertion<S, A> = (...steps: TestStoreStep<S, A>[]) => void;
 
 export interface TestStore<S, A> extends Store<S, A> {
   assert: TestStoreAssertion<S, A>;
+  assertSnapshot(expected: { action?: A; state: S }[]): void;
 }
 
 interface SubscriberManager<S> {
@@ -251,13 +259,20 @@ export function makeTestStore<S, A, R>(
   env: R,
   reducer: Reducer<S, A, R>,
 ): TestStore<S, A> {
-  const manager = makeSubscriberManager<S>(initialState, true);
+  let state = initialState;
+
+  const manager = makeSubscriberManager<S>(state, true);
   const actionQueue: A[] = [];
-  let state = manager.getState();
+
+  // Track all state transitions
+  const history: { action?: A; state: S }[] = [{ state: deepClone(state) }];
 
   const processAction = (action: A) => {
     const [newState, effect] = reducer.reduce(state, action, env);
     state = newState;
+
+    history.push({ state: newState, action });
+
     manager.setState(state);
     effect.unsafeRun((producedAction) => {
       actionQueue.push(producedAction);
@@ -278,9 +293,35 @@ export function makeTestStore<S, A, R>(
     }),
   };
 
+  const drainEffects = () => {
+    while (actionQueue.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const action = actionQueue.shift()!;
+      processAction(action);
+      manager.notify();
+    }
+  };
+
+  function assertSnapshot(expected: { action?: A; state: S }[]): void {
+    drainEffects();
+
+    const actualState = JSON.stringify(history, null, 2);
+    const expectedState = JSON.stringify(expected, null, 2);
+
+    if (actualState !== expectedState) {
+      const stateDiff = diff(expectedState, actualState, {
+        expand: false,
+        contextLines: 3,
+      });
+
+      throw new Error(`State mismatch:\n${stateDiff}`);
+    }
+  }
+
   return {
     ...baseStore,
     assert: makeAssert(manager, actionQueue, processAction),
+    assertSnapshot,
   };
 }
 
@@ -366,8 +407,6 @@ function makeAssert<S, A>(
     }
   };
 }
-
-// ----------------------------------------------------------------
 
 // ----------------------------------------------------------------
 

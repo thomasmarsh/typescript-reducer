@@ -1,0 +1,90 @@
+ [
+  {
+    "state": {
+      "leftCounter": 0,
+      "rightCounter": 0,
+      "cats": {
+        "tag": "Empty"
+      }
+    }
+  },
+  {
+    "state": {
+      "leftCounter": 1,
+      "rightCounter": 0,
+      "cats": {
+        "tag": "Empty"
+      }
+    },
+    "action": {
+      "tag": "LeftAction",
+      "value": "increment"
+    }
+  },
+  {
+    "state": {
+      "leftCounter": 1,
+      "rightCounter": 0,
+      "cats": {
+        "tag": "Loading"
+      }
+    },
+    "action": {
+      "tag": "CatAction",
+      "value": {
+        "tag": "FetchCats",
+        "count": 3
+      }
+    }
+  },
+  {
+    "state": {
+      "leftCounter": 1,
+      "rightCounter": 0,
+      "cats": {
+        "tag": "Loading"
+      }
+    },
+    "action": {
+      "tag": "CatAction",
+      "value": {
+        "tag": "FetchCats",
+        "count": 1
+      }
+    }
+  },
+  {
+    "state": {
+      "leftCounter": 1,
+      "rightCounter": 0,
+      "cats": {
+        "tag": "Error",
+        "error": "failure"
+      }
+    },
+    "action": {
+      "tag": "CatAction",
+      "value": {
+        "tag": "CatsFetchFailed",
+        "error": "failure"
+      }
+    }
+  },
+  {
+    "state": {
+      "leftCounter": 1,
+      "rightCounter": 0,
+      "cats": {
+        "tag": "Error",
+        "error": "failure"
+      }
+    },
+    "action": {
+      "tag": "CatAction",
+      "value": {
+        "tag": "CatsFetchFailed",
+        "error": "failure"
+      }
+    }
+  }
+]
