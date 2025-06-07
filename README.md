@@ -35,6 +35,6 @@ This implementation suffers from the following primary deficiencies that prevent
 
 - `Store.send()` is implemented recursively. It should maintain a FIFO queue array of actions to process so that it doesn't accidentally blow the stack.
 
-- There are no performance considerations. This is purely a pedagogic tool.
+- There are no performance considerations. This is purely a pedagogic tool. For example, using [Mutative](https://mutative.js.org) or other approach to persistent data structures would boost performance.
 
 - The `catReducer` is intentionally simple. Using more complicated state management, and cancellable effects, it would be better implemented using debouncing of requests and canceling inflight requests when changes are received in a `Loading` state.
