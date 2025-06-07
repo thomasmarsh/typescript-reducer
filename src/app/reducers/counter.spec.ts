@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { CounterAction, CounterEnv, counterReducer } from './counter';
-import { makeTestStore, TestStore, Effect, send } from '../core/framework';
+import { makeTestStore, TestStore, send } from '../core/test-support';
+import { Effect } from 'app/core/framework';
 
 import counterSnapshot from './fixtures/counter.json';
 

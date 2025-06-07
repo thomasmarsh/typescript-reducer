@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { AppAction, AppEnv, appReducer, AppState } from './app';
-import { makeTestStore, TestStore, Effect } from '../core/framework';
+import { makeTestStore, TestStore } from '../core/test-support';
+import { Effect } from '../core/framework';
 import { CatSearchUrl, initCatState } from './cats';
 import { Err, Ok, Result } from 'app/core/result';
 

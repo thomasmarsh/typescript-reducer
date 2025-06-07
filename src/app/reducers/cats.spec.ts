@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { catReducer, CatSearchUrl, initCatState } from './cats';
-import { Effect, receive, send } from '../core/framework';
+import { receive, send, makeTestStore } from '../core/test-support';
 import { Err, Ok, Result } from '../core/result';
-import { makeTestStore } from '../core/framework';
+import { Effect } from '../core/framework';
 
 describe('catReducer', () => {
   const catUrls = [
