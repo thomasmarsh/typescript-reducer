@@ -4,6 +4,10 @@ export const compose =
   (a: A): C =>
     f(g(a));
 
+export function exhaustiveGuard(value: never): never {
+  return absurd<never>(value);
+}
+
 export function absurd<A>(_value: never): A {
   throw new Error(
     `ERROR! Reached forbidden function with unexpected value: ${JSON.stringify(
@@ -18,12 +22,4 @@ export function deepClone<A>(a: A): A {
 
 export function deepEqual<A>(a: A, b: A): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
-}
-
-export function exhaustiveGuard(_value: never): never {
-  throw new Error(
-    `ERROR! Reached forbidden guard function with unexpected value: ${JSON.stringify(
-      _value,
-    )}`,
-  );
 }
