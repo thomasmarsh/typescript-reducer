@@ -9,10 +9,10 @@ import {
   appReducer,
   AppState,
   catPrism,
+  initialAppState,
   leftPrism,
   rightPrism,
 } from '../../reducers/app';
-import { initCatState } from '../../reducers/cats';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
@@ -36,14 +36,14 @@ describe('AppComponent', () => {
 
     // Top-level store instantiated here
     const store = makeStore<AppState, AppAction, AppEnv>(
-      { leftCounter: 0, rightCounter: 0, cats: initCatState },
+      initialAppState(),
       env,
       appReducer,
     );
 
-    const store1 = store.scope((s) => s.leftCounter, leftPrism.embed);
-    const store2 = store.scope((s) => s.rightCounter, rightPrism.embed);
-    const store3 = store.scope((s) => s.cats, catPrism.embed);
+    const store1 = store.scope((s) => s.state.leftCounter, leftPrism.embed);
+    const store2 = store.scope((s) => s.state.rightCounter, rightPrism.embed);
+    const store3 = store.scope((s) => s.state.cats, catPrism.embed);
 
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;

@@ -1,12 +1,28 @@
-import { CatAction, CatEnv, catReducer, CatState } from './cats';
+import { CatAction, CatEnv, catReducer, CatState, initCatState } from './cats';
 import { CounterAction, CounterEnv, counterReducer } from './counter';
 import { concatReducers, Effect, pullback } from '../core/framework';
-import { Lens, lensFor, Prism } from '../core/optics';
+import { composeL, Lens, lensFor, Prism } from '../core/optics';
+import { deepClone } from 'app/core/util';
 
-interface AppState {
+interface AppData {
   leftCounter: number;
   rightCounter: number;
   cats: CatState;
+}
+
+interface TraceEntry {
+  action: AppAction;
+  state: AppData;
+}
+
+interface AppHistory {
+  initialState: AppData;
+  trace: TraceEntry[];
+}
+
+interface AppState {
+  state: AppData;
+  history: AppHistory;
 }
 
 type AppAction =
@@ -20,9 +36,16 @@ interface AppEnv {
   cat: CatEnv;
 }
 
-const leftLens: Lens<AppState, number> = lensFor('leftCounter');
-const rightLens: Lens<AppState, number> = lensFor('rightCounter');
-const catLens: Lens<AppState, CatState> = lensFor('cats');
+const dataLens: Lens<AppState, AppData> = lensFor('state');
+const leftLens: Lens<AppState, number> = composeL(
+  dataLens,
+  lensFor('leftCounter'),
+);
+const rightLens: Lens<AppState, number> = composeL(
+  dataLens,
+  lensFor('rightCounter'),
+);
+const catLens: Lens<AppState, CatState> = composeL(dataLens, lensFor('cats'));
 
 const leftPrism: Prism<AppAction, CounterAction> = {
   extract: (a) => (a.tag === 'LeftAction' ? a.value : null),
@@ -39,6 +62,28 @@ const catPrism: Prism<AppAction, CatAction> = {
   embed: (v) => ({ tag: 'CatAction', value: v }),
 };
 
+function updateHistory(state: AppState, action: AppAction): AppState {
+  const newState = deepClone(state);
+  newState.history.trace.push({ state: state.state, action });
+  return newState;
+}
+
+export function initialAppState(): AppState {
+  const initialData: AppData = {
+    leftCounter: 0,
+    rightCounter: 0,
+    cats: initCatState,
+  };
+
+  return {
+    state: initialData,
+    history: {
+      initialState: initialData,
+      trace: [],
+    },
+  };
+}
+
 const appReducer = concatReducers(
   pullback(counterReducer, leftLens, leftPrism, (env: AppEnv) => env.left),
   pullback(counterReducer, rightLens, rightPrism, (env: AppEnv) => env.right),
@@ -48,16 +93,26 @@ const appReducer = concatReducers(
       const none = Effect.empty<AppAction>();
       if (action.tag === 'LeftAction') {
         return [
-          state,
+          updateHistory(state, action),
           Effect.pure(
-            catPrism.embed({ tag: 'FetchCats', count: state.leftCounter }),
+            catPrism.embed({
+              tag: 'FetchCats',
+              count: state.state.leftCounter,
+            }),
           ),
         ];
       }
-      return [state, none];
+      return [updateHistory(state, action), none];
     },
   },
 );
 
 export type { AppAction, AppState, AppEnv };
-export { appReducer, leftPrism, rightPrism, catPrism };
+export {
+  appReducer,
+  leftPrism,
+  rightPrism,
+  catPrism,
+  type AppData,
+  type AppHistory,
+};
