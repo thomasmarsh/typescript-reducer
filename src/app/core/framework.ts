@@ -152,7 +152,6 @@ export interface SubscriberManager<S> {
 
 export function makeSubscriberManager<S>(
   initialState: S,
-  immediateCallback = false,
 ): SubscriberManager<S> {
   let state = initialState;
   const subscribers = new Map<string, Callback<S>>();
@@ -160,7 +159,10 @@ export function makeSubscriberManager<S>(
   const subscribe = (callback: Callback<S>): (() => void) => {
     const uuid = crypto.randomUUID();
     subscribers.set(uuid, callback);
-    if (immediateCallback) callback(state);
+
+    // Invoke callback for initial state
+    callback(state);
+
     return () => {
       subscribers.delete(uuid);
     };

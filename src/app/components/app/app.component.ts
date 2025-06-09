@@ -44,9 +44,15 @@ export class AppComponent {
       cat: { httpFetch: httpFetch(inject(HttpClient)) },
     };
 
+    const initialState: AppState = {
+      leftCounter: 0,
+      rightCounter: 0,
+      cats: initCatState,
+    };
+
     // Top-level store instantiated here
     this.store = makeStore<AppState, AppAction, AppEnv>(
-      { leftCounter: 0, rightCounter: 0, cats: initCatState },
+      initialState,
       env,
       loggingReducer(appReducer, logEffect),
     );

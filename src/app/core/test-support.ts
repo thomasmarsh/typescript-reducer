@@ -41,7 +41,7 @@ export function makeTestStore<S, A, R>(
 ): TestStore<S, A> {
   let state = initialState;
 
-  const manager = makeSubscriberManager<S>(state, true);
+  const manager = makeSubscriberManager<S>(state);
   const actionQueue: A[] = [];
 
   // Track all state transitions
